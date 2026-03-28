@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
@@ -6,6 +7,20 @@ const Dashboard = () => {
 
   return (
     <div className="container-custom py-8">
+      {/* Report Blockage Banner */}
+      <div className="mb-6 flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-6 py-4">
+        <div>
+          <p className="font-semibold text-red-800 text-lg">🚧 See a road blockage?</p>
+          <p className="text-red-600 text-sm">Help your community by reporting it now.</p>
+        </div>
+        <Link
+          to="/report-blockage"
+          className="btn-primary bg-red-600 hover:bg-red-700 py-2 px-5 text-sm whitespace-nowrap"
+        >
+          Report Blockage
+        </Link>
+      </div>
+
       {/* Welcome Section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">

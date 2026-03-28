@@ -7,7 +7,7 @@ import sequelize, { testConnection } from './config/database.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // ============================================
 // MIDDLEWARE
@@ -69,9 +69,9 @@ app.use('/api/auth', authRoutes);
 // app.use('/api/messages', messageRoutes);
 // app.use('/api/conversations', messageRoutes);
 
-// [DEV2] Blockage routes - Developer 2 will implement
-// import blockageRoutes from './routes/blockages.js';
-// app.use('/api/blockages', blockageRoutes);
+// [DEV2] Blockage routes
+import blockageRoutes from './routes/blockages.js';
+app.use('/api/blockages', blockageRoutes);
 
 // [DEV2] Weather routes - Developer 2 will implement
 // import weatherRoutes from './routes/weather.js';

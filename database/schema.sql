@@ -157,17 +157,19 @@ CREATE INDEX idx_transactions_offer ON transactions(offer_id);
 CREATE TABLE IF NOT EXISTS blockages (
     blockage_id SERIAL PRIMARY KEY,
     reported_by INT REFERENCES users(user_id),
-    location_lat DECIMAL(10, 8) NOT NULL,
-    location_lng DECIMAL(11, 8) NOT NULL,
+    location_lat DECIMAL(10, 8),
+    location_lng DECIMAL(11, 8),
     location_address TEXT,
-    blockage_type VARCHAR(100), -- road_closure, flooding, debris, power_line, other
+    blockage_type VARCHAR(100), -- tree_down, flooding, ice, power_line, debris, road_closure, other
     severity VARCHAR(20), -- low, medium, high, critical
     description TEXT,
+    photo_url TEXT,
     status VARCHAR(50) DEFAULT 'active', -- active, resolved, verified
-    image_url TEXT,
+    authority_notified BOOLEAN DEFAULT false,
+    notified_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
-    resolved_at TIMESTAMP
+    expires_at TIMESTAMP
 );
 
 CREATE INDEX idx_blockages_location ON blockages(location_lat, location_lng);

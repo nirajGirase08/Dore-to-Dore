@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import ReportBlockage from './pages/ReportBlockage';
 import Layout from './components/shared/Layout';
 
 // Protected Route wrapper
@@ -120,28 +121,17 @@ function App() {
           />
           */}
 
-          {/* DEV2: Add your routes here
+          {/* DEV2: Blockage reporting */}
           <Route
-            path="/blockages"
+            path="/report-blockage"
             element={
               <ProtectedRoute>
                 <Layout>
-                  <BlockagesPage />
+                  <ReportBlockage />
                 </Layout>
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/map"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <MapPage />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          */}
 
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

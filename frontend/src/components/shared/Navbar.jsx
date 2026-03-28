@@ -58,21 +58,13 @@ const Navbar = () => {
             </Link>
             */}
 
-            {/* DEV2: Add your navigation links here */}
-            {/*
+            {/* DEV2: Navigation links */}
             <Link
-              to="/blockages"
+              to="/report-blockage"
               className="hover:text-primary-200 transition-colors"
             >
-              Blockages
+              🚧 Blockages
             </Link>
-            <Link
-              to="/map"
-              className="hover:text-primary-200 transition-colors"
-            >
-              Map
-            </Link>
-            */}
 
             {/* User menu */}
             <div className="flex items-center space-x-4 border-l border-primary-500 pl-6">
@@ -128,7 +120,14 @@ const Navbar = () => {
             </Link>
 
             {/* DEV1: Add your mobile navigation links here */}
-            {/* DEV2: Add your mobile navigation links here */}
+            {/* DEV2: Mobile navigation */}
+            <Link
+              to="/report-blockage"
+              className="block hover:text-primary-200 transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              🚧 Blockages
+            </Link>
 
             <div className="pt-3 border-t border-primary-500">
               <div className="text-sm mb-2">{user?.name}</div>

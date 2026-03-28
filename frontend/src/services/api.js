@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -43,7 +43,7 @@ api.interceptors.response.use(
       return Promise.reject(err);
     } else if (error.request) {
       // Request made but no response received
-      const err = new Error('Backend server is not responding. Please make sure the server is running on http://localhost:5000');
+      const err = new Error('Backend server is not responding. Please make sure the server is running on http://localhost:5001');
       err.request = error.request;
       return Promise.reject(err);
     } else {
@@ -189,11 +189,10 @@ export const messagesAPI = {
 };
 
 // ============================================
-// Blockages API (Developer 2 will implement)
+// Blockages API (Developer 2)
 // ============================================
 
 export const blockagesAPI = {
-  // Developer 2: Add your blockage API methods here
   getAll: async (params) => {
     const response = await api.get('/blockages', { params });
     return response.data;
@@ -201,6 +200,26 @@ export const blockagesAPI = {
 
   create: async (blockageData) => {
     const response = await api.post('/blockages', blockageData);
+    return response.data;
+  },
+
+  getById: async (id) => {
+    const response = await api.get(`/blockages/${id}`);
+    return response.data;
+  },
+
+  update: async (id, data) => {
+    const response = await api.put(`/blockages/${id}`, data);
+    return response.data;
+  },
+
+  remove: async (id) => {
+    const response = await api.delete(`/blockages/${id}`);
+    return response.data;
+  },
+
+  notify: async (id) => {
+    const response = await api.post(`/blockages/${id}/notify`);
     return response.data;
   },
 };
