@@ -1,12 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import BlockageCard from './BlockageCard';
 import { getBlockages } from '../../services/blockageService';
+
+const haversineKm = (lat1, lng1, lat2, lng2) => {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
 
 const TYPES = ['', 'tree_down', 'flooding', 'ice', 'power_line', 'debris', 'road_closure', 'other'];
 const SEVERITIES = ['', 'low', 'medium', 'high', 'critical'];
 const STATUSES = ['', 'active', 'resolved', 'verified'];
 
 const BlockageList = () => {
+  const { user } = useAuth();
   const [blockages, setBlockages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,7 +35,27 @@ const BlockageList = () => {
       if (filters.severity) params.severity = filters.severity;
       if (filters.status) params.status = filters.status;
       const data = await getBlockages(params);
-      setBlockages(data.blockages || []);
+
+      const all = data.blockages || [];
+      const userLat = user?.location_lat ? parseFloat(user.location_lat) : null;
+      const userLng = user?.location_lng ? parseFloat(user.location_lng) : null;
+
+      // Mirror notification logic:
+      // - reporter always sees their own blockages (to manage/resolve them)
+      // - high/critical → visible to everyone else
+      // - low/medium    → visible only to users within 1 mile of the reporter
+      const visible = all.filter((b) => {
+        if (b.reporter?.user_id === user?.user_id) return true; // always show own reports
+        if (['high', 'critical'].includes(b.severity)) return true; // high/critical visible to all
+        // low/medium — only show if within 1 mile of the reporter
+        if (!userLat || !userLng) return false;
+        const rLat = b.reporter?.location_lat ? parseFloat(b.reporter.location_lat) : null;
+        const rLng = b.reporter?.location_lng ? parseFloat(b.reporter.location_lng) : null;
+        if (!rLat || !rLng) return false;
+        return haversineKm(userLat, userLng, rLat, rLng) <= 1.60934;
+      });
+
+      setBlockages(visible);
     } catch (err) {
       setError(err.message);
     } finally {

@@ -17,7 +17,7 @@ const Blockage = sequelize.define('Blockage', {
     type: DataTypes.STRING(100),
     allowNull: false,
     validate: {
-      isIn: [['tree_down', 'flooding', 'ice', 'power_line', 'debris', 'road_closure', 'other']],
+      isIn: [['tree_down', 'flooding', 'ice', 'power_line', 'debris', 'road_closure', 'accident', 'other']],
     },
   },
   severity: {

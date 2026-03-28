@@ -10,6 +10,7 @@ const SEVERITY_STYLES = {
 };
 
 const TYPE_ICONS = {
+  accident: '🚨',
   tree_down: '🌳',
   flooding: '🌊',
   ice: '🧊',
@@ -84,7 +85,7 @@ const BlockageCard = ({ blockage, onUpdate }) => {
         >
           {blockage.status}
         </span>
-        {blockage.authority_notified && (
+        {isOwner && blockage.authority_notified && (
           <span className="badge text-xs bg-green-100 text-green-800">
             ✓ Authorities Notified
           </span>

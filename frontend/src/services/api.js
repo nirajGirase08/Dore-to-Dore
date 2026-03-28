@@ -268,6 +268,27 @@ export const blockagesAPI = {
 };
 
 // ============================================
+// Notifications API (Developer 2)
+// ============================================
+
+export const notificationsAPI = {
+  getUnread: async () => {
+    const response = await api.get('/notifications', { params: { is_read: false } });
+    return response.data;
+  },
+
+  markRead: async (id) => {
+    const response = await api.put(`/notifications/${id}/read`);
+    return response.data;
+  },
+
+  markAllRead: async () => {
+    const response = await api.put('/notifications/read-all');
+    return response.data;
+  },
+};
+
+// ============================================
 // Weather API (Developer 2 will implement)
 // ============================================
 

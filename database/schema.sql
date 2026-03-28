@@ -218,6 +218,25 @@ CREATE TABLE IF NOT EXISTS authorities (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- In-App Notifications Table (Developer 2)
+-- blockage_alert  → high/critical severity, shown as banner to ALL users
+-- blockage_nearby → low/medium severity, shown in bell dropdown to users within 1 mile
+CREATE TABLE IF NOT EXISTS notifications (
+    notification_id SERIAL PRIMARY KEY,
+    user_id         INT REFERENCES users(user_id) ON DELETE CASCADE,
+    notification_type VARCHAR(50) NOT NULL,
+    title           VARCHAR(255) NOT NULL,
+    message         TEXT,
+    related_id      INT,
+    severity        VARCHAR(20),
+    is_read         BOOLEAN DEFAULT false,
+    is_dismissed    BOOLEAN DEFAULT false,
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user   ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read);
+
 -- Authority Notifications Table (Developer 2)
 CREATE TABLE IF NOT EXISTS authority_notifications (
     notification_id SERIAL PRIMARY KEY,
