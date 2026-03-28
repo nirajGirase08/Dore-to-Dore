@@ -220,8 +220,6 @@ router.post('/', authenticate, async (req, res) => {
       ]
     });
 
-    const isNewConversation = !conversation;
-
     if (!conversation) {
       conversation = await Conversation.create({
         participant_1_id: userId,
@@ -237,7 +235,7 @@ router.post('/', authenticate, async (req, res) => {
       });
     }
 
-    if (isNewConversation && initial_message) {
+    if (initial_message) {
       await Message.create({
         conversation_id: conversation.conversation_id,
         sender_id: userId,
