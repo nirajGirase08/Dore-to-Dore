@@ -63,7 +63,8 @@ export const AuthProvider = ({ children }) => {
         throw new Error(response.error || 'Login failed');
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.error || err.message || 'Login failed';
+      console.error('Login error:', err);
+      const errorMessage = err.message || err.response?.data?.error || 'Login failed';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
@@ -93,7 +94,8 @@ export const AuthProvider = ({ children }) => {
         throw new Error(response.error || 'Registration failed');
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.error || err.message || 'Registration failed';
+      console.error('Registration error:', err);
+      const errorMessage = err.message || err.response?.data?.error || 'Registration failed';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {

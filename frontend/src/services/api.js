@@ -37,14 +37,18 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
 
-      // Return error message from server
-      return Promise.reject(data.error || 'An error occurred');
+      // Create error with message from server
+      const err = new Error(data.error || 'An error occurred');
+      err.response = error.response;
+      return Promise.reject(err);
     } else if (error.request) {
       // Request made but no response received
-      return Promise.reject('No response from server. Please check your connection.');
+      const err = new Error('Backend server is not responding. Please make sure the server is running on http://localhost:5000');
+      err.request = error.request;
+      return Promise.reject(err);
     } else {
       // Something else happened
-      return Promise.reject(error.message || 'An error occurred');
+      return Promise.reject(error);
     }
   }
 );
