@@ -170,7 +170,7 @@ const ChatWindow = ({ conversation, onBack, onMessageSent }) => {
                         isOwnMessage ? 'text-blue-100' : 'text-gray-500'
                       }`}
                     >
-                      {formatMessageTime(message.created_at)}
+                      {formatMessageTime(message.sent_at)}
                     </p>
                   </div>
                 </div>

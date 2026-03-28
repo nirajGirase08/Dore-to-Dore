@@ -10,18 +10,17 @@ const Message = sequelize.define('Message', {
   conversation_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
-      model: 'conversations',
-      key: 'conversation_id',
-    },
+    references: { model: 'conversations', key: 'conversation_id' },
   },
   sender_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
-      model: 'users',
-      key: 'user_id',
-    },
+    references: { model: 'users', key: 'user_id' },
+  },
+  recipient_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'users', key: 'user_id' },
   },
   message_text: {
     type: DataTypes.TEXT,
@@ -31,15 +30,13 @@ const Message = sequelize.define('Message', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  created_at: {
+  sent_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
   },
 }, {
   tableName: 'messages',
-  timestamps: true,
-  createdAt: 'created_at',
-  updatedAt: false,
+  timestamps: false,
 });
 
 export default Message;

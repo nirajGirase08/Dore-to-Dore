@@ -158,7 +158,7 @@ const NeedHelpPage = () => {
         title: offer.title
       });
 
-      const initialMessage = `Hi! I'm interested in your offer "${offer.title}". Can you help me?`;
+      const initialMessage = `Hi! I'm interested in "${offer.title}"`;
 
       const response = await conversationsAPI.createOrGet(
         offer.user_id,

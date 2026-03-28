@@ -24,8 +24,8 @@ Request.hasMany(RequestItem, { foreignKey: 'request_id', as: 'items' });
 RequestItem.belongsTo(Request, { foreignKey: 'request_id', as: 'request' });
 
 // Conversation - User associations
-Conversation.belongsTo(User, { foreignKey: 'user1_id', as: 'user1' });
-Conversation.belongsTo(User, { foreignKey: 'user2_id', as: 'user2' });
+Conversation.belongsTo(User, { foreignKey: 'participant_1_id', as: 'user1' });
+Conversation.belongsTo(User, { foreignKey: 'participant_2_id', as: 'user2' });
 
 // Conversation - Message associations
 Conversation.hasMany(Message, { foreignKey: 'conversation_id', as: 'messages' });

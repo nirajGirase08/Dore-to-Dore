@@ -7,39 +7,41 @@ const Conversation = sequelize.define('Conversation', {
     primaryKey: true,
     autoIncrement: true,
   },
-  user1_id: {
+  request_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'user_id',
-    },
+    allowNull: true,
+    references: { model: 'requests', key: 'request_id' },
   },
-  user2_id: {
+  offer_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'user_id',
-    },
+    allowNull: true,
+    references: { model: 'offers', key: 'offer_id' },
+  },
+  participant_1_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'users', key: 'user_id' },
+  },
+  participant_2_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: { model: 'users', key: 'user_id' },
+  },
+  status: {
+    type: DataTypes.STRING(50),
+    defaultValue: 'active',
   },
   last_message_at: {
     type: DataTypes.DATE,
-    allowNull: true,
+    defaultValue: DataTypes.NOW,
   },
   created_at: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
   },
-  updated_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-  },
 }, {
   tableName: 'conversations',
-  timestamps: true,
-  createdAt: 'created_at',
-  updatedAt: 'updated_at',
+  timestamps: false,
 });
 
 export default Conversation;

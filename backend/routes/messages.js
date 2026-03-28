@@ -23,8 +23,8 @@ router.post('/', authenticate, async (req, res) => {
       where: {
         conversation_id,
         [Op.or]: [
-          { user1_id: userId },
-          { user2_id: userId }
+          { participant_1_id: userId },
+          { participant_2_id: userId }
         ]
       }
     });
@@ -36,10 +36,16 @@ router.post('/', authenticate, async (req, res) => {
       });
     }
 
+    // Derive recipient from the other participant
+    const recipientId = conversation.participant_1_id === userId
+      ? conversation.participant_2_id
+      : conversation.participant_1_id;
+
     // Create message
     const message = await Message.create({
       conversation_id,
       sender_id: userId,
+      recipient_id: recipientId,
       message_text,
       is_read: false
     });

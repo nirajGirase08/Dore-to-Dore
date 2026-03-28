@@ -22,8 +22,8 @@ router.get('/unread-count', authenticate, async (req, res) => {
           required: true,
           where: {
             [Op.or]: [
-              { user1_id: userId },
-              { user2_id: userId }
+              { participant_1_id: userId },
+              { participant_2_id: userId }
             ]
           }
         }
@@ -51,8 +51,8 @@ router.get('/', authenticate, async (req, res) => {
     const conversations = await Conversation.findAll({
       where: {
         [Op.or]: [
-          { user1_id: userId },
-          { user2_id: userId }
+          { participant_1_id: userId },
+          { participant_2_id: userId }
         ]
       },
       include: [
@@ -70,8 +70,9 @@ router.get('/', authenticate, async (req, res) => {
           model: Message,
           as: 'messages',
           limit: 1,
-          order: [['created_at', 'DESC']],
-          attributes: ['message_id', 'message_text', 'sender_id', 'created_at', 'is_read']
+          order: [['sent_at', 'DESC']],
+          attributes: ['message_id', 'message_text', 'sender_id', 'sent_at', 'is_read'],
+          separate: true
         }
       ],
       order: [['last_message_at', 'DESC']]
@@ -80,7 +81,7 @@ router.get('/', authenticate, async (req, res) => {
     // Transform data to include "other user" info
     const transformedConversations = conversations.map(conv => {
       const convData = conv.toJSON();
-      const otherUser = convData.user1_id === userId ? convData.user2 : convData.user1;
+      const otherUser = convData.participant_1_id === userId ? convData.user2 : convData.user1;
       const lastMessage = convData.messages?.[0] || null;
 
       return {
@@ -115,8 +116,8 @@ router.get('/:id', authenticate, async (req, res) => {
       where: {
         conversation_id: conversationId,
         [Op.or]: [
-          { user1_id: userId },
-          { user2_id: userId }
+          { participant_1_id: userId },
+          { participant_2_id: userId }
         ]
       },
       include: [
@@ -140,7 +141,7 @@ router.get('/:id', authenticate, async (req, res) => {
               attributes: ['user_id', 'name']
             }
           ],
-          order: [['created_at', 'ASC']]
+          order: [['sent_at', 'ASC']]
         }
       ]
     });
@@ -165,7 +166,7 @@ router.get('/:id', authenticate, async (req, res) => {
     );
 
     const convData = conversation.toJSON();
-    const otherUser = convData.user1_id === userId ? convData.user2 : convData.user1;
+    const otherUser = convData.participant_1_id === userId ? convData.user2 : convData.user1;
 
     res.json({
       success: true,
@@ -191,14 +192,6 @@ router.post('/', authenticate, async (req, res) => {
     const userId = req.userId;
     const { other_user_id, initial_message, offer_id, request_id } = req.body;
 
-    console.log('POST /conversations received:', {
-      userId,
-      other_user_id,
-      offer_id,
-      request_id,
-      has_initial_message: !!initial_message
-    });
-
     if (!other_user_id) {
       return res.status(400).json({
         success: false,
@@ -217,83 +210,57 @@ router.post('/', authenticate, async (req, res) => {
     let conversation = await Conversation.findOne({
       where: {
         [Op.or]: [
-          { user1_id: userId, user2_id: other_user_id },
-          { user1_id: other_user_id, user2_id: userId }
+          { participant_1_id: userId, participant_2_id: other_user_id },
+          { participant_1_id: other_user_id, participant_2_id: userId }
         ]
       },
       include: [
-        {
-          model: User,
-          as: 'user1',
-          attributes: ['user_id', 'name', 'email']
-        },
-        {
-          model: User,
-          as: 'user2',
-          attributes: ['user_id', 'name', 'email']
-        }
+        { model: User, as: 'user1', attributes: ['user_id', 'name', 'email'] },
+        { model: User, as: 'user2', attributes: ['user_id', 'name', 'email'] }
       ]
     });
 
     const isNewConversation = !conversation;
 
-    // If doesn't exist, create new conversation
     if (!conversation) {
       conversation = await Conversation.create({
-        user1_id: userId,
-        user2_id: other_user_id,
+        participant_1_id: userId,
+        participant_2_id: other_user_id,
         last_message_at: new Date()
       });
 
-      // Reload with user data
       conversation = await Conversation.findByPk(conversation.conversation_id, {
         include: [
-          {
-            model: User,
-            as: 'user1',
-            attributes: ['user_id', 'name', 'email']
-          },
-          {
-            model: User,
-            as: 'user2',
-            attributes: ['user_id', 'name', 'email']
-          }
+          { model: User, as: 'user1', attributes: ['user_id', 'name', 'email'] },
+          { model: User, as: 'user2', attributes: ['user_id', 'name', 'email'] }
         ]
       });
     }
 
-    // Only send initial message if this is a NEW conversation and message is provided
     if (isNewConversation && initial_message) {
       await Message.create({
         conversation_id: conversation.conversation_id,
         sender_id: userId,
+        recipient_id: other_user_id,
         message_text: initial_message,
         is_read: false
       });
 
-      await conversation.update({
-        last_message_at: new Date()
-      });
+      await conversation.update({ last_message_at: new Date() });
     }
 
-    // Keep offers/requests active during conversations.
-    // Fulfillment status is driven by item-level completion now.
     if (offer_id) {
       const offer = await Offer.findByPk(offer_id);
-      if (!offer) {
-        console.log('Offer not found with id:', offer_id);
-      }
+      if (!offer) console.log('Offer not found with id:', offer_id);
     }
 
     if (request_id) {
       const request = await Request.findByPk(request_id);
-      if (!request) {
-        console.log('Request not found with id:', request_id);
-      }
+      if (!request) console.log('Request not found with id:', request_id);
     }
 
     const convData = conversation.toJSON();
-    const otherUser = convData.user1_id === userId ? convData.user2 : convData.user1;
+    const otherUser = convData.participant_1_id === userId ? convData.user2 : convData.user1;
 
     res.json({
       success: true,

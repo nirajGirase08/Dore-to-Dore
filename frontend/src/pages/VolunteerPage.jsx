@@ -154,7 +154,7 @@ const VolunteerPage = () => {
         title: request.title
       });
 
-      const initialMessage = `Hi! I saw your request "${request.title}" and I'd like to help.`;
+      const initialMessage = `Hi! I'd like to help with "${request.title}"`;
 
       const response = await conversationsAPI.createOrGet(
         request.user_id,
