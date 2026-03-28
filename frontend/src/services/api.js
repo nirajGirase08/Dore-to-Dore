@@ -109,6 +109,16 @@ export const requestsAPI = {
     return response.data;
   },
 
+  updateStatus: async (id, status) => {
+    const response = await api.patch(`/requests/${id}/status`, { status });
+    return response.data;
+  },
+
+  fulfillItem: async (requestId, itemId) => {
+    const response = await api.patch(`/requests/${requestId}/items/${itemId}/fulfill`);
+    return response.data;
+  },
+
   delete: async (id) => {
     const response = await api.delete(`/requests/${id}`);
     return response.data;
@@ -145,6 +155,16 @@ export const offersAPI = {
     return response.data;
   },
 
+  updateStatus: async (id, status) => {
+    const response = await api.patch(`/offers/${id}/status`, { status });
+    return response.data;
+  },
+
+  fulfillItem: async (offerId, itemId) => {
+    const response = await api.patch(`/offers/${offerId}/items/${itemId}/fulfill`);
+    return response.data;
+  },
+
   delete: async (id) => {
     const response = await api.delete(`/offers/${id}`);
     return response.data;
@@ -163,27 +183,50 @@ export const searchAPI = {
 };
 
 // ============================================
-// Messages API (Developer 1)
+// Messages & Conversations API (Developer 1)
 // ============================================
 
-export const messagesAPI = {
-  getConversations: async () => {
+export const conversationsAPI = {
+  // Get all conversations for current user
+  getAll: async () => {
     const response = await api.get('/conversations');
     return response.data;
   },
 
-  getMessages: async (conversationId) => {
-    const response = await api.get(`/conversations/${conversationId}/messages`);
+  // Get single conversation with all messages
+  getById: async (conversationId) => {
+    const response = await api.get(`/conversations/${conversationId}`);
     return response.data;
   },
 
-  sendMessage: async (messageData) => {
-    const response = await api.post('/messages', messageData);
+  // Create or get existing conversation with another user
+  createOrGet: async (otherUserId, initialMessage = null, offerId = null, requestId = null) => {
+    const payload = {
+      other_user_id: otherUserId,
+      initial_message: initialMessage,
+      offer_id: offerId,
+      request_id: requestId
+    };
+    console.log('Creating/getting conversation with payload:', payload);
+    const response = await api.post('/conversations', payload);
+    console.log('Conversation API response:', response.data);
     return response.data;
   },
 
-  markAsRead: async (messageId) => {
-    const response = await api.put(`/messages/${messageId}/read`);
+  // Get unread message count for current user
+  getUnreadCount: async () => {
+    const response = await api.get('/conversations/unread-count');
+    return response.data;
+  },
+};
+
+export const messagesAPI = {
+  // Send a message in a conversation
+  send: async (conversationId, messageText) => {
+    const response = await api.post('/messages', {
+      conversation_id: conversationId,
+      message_text: messageText
+    });
     return response.data;
   },
 };

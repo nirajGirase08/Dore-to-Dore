@@ -44,30 +44,36 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Initialize model associations
+import './models/index.js';
+
 // [DEV1] Authentication routes
 import authRoutes from './routes/auth.js';
 app.use('/api/auth', authRoutes);
+
+// [DEV1] Offer routes
+import offerRoutes from './routes/offers.js';
+app.use('/api/offers', offerRoutes);
+
+// [DEV1] Request routes
+import requestRoutes from './routes/requests.js';
+app.use('/api/requests', requestRoutes);
 
 // [DEV1] User routes - To be implemented
 // import userRoutes from './routes/users.js';
 // app.use('/api/users', userRoutes);
 
-// [DEV1] Request routes - To be implemented
-// import requestRoutes from './routes/requests.js';
-// app.use('/api/requests', requestRoutes);
-
-// [DEV1] Offer routes - To be implemented
-// import offerRoutes from './routes/offers.js';
-// app.use('/api/offers', offerRoutes);
-
 // [DEV1] Search routes - To be implemented
 // import searchRoutes from './routes/search.js';
 // app.use('/api/search', searchRoutes);
 
-// [DEV1] Message routes - To be implemented
-// import messageRoutes from './routes/messages.js';
-// app.use('/api/messages', messageRoutes);
-// app.use('/api/conversations', messageRoutes);
+// [DEV1] Message routes
+import messageRoutes from './routes/messages.js';
+app.use('/api/messages', messageRoutes);
+
+// [DEV1] Conversation routes
+import conversationRoutes from './routes/conversations.js';
+app.use('/api/conversations', conversationRoutes);
 
 // [DEV2] Blockage routes
 import blockageRoutes from './routes/blockages.js';

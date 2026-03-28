@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import VolunteerPage from './pages/VolunteerPage';
 import NeedHelpPage from './pages/NeedHelpPage';
+import MessagesPage from './pages/MessagesPage';
 import ReportBlockage from './pages/ReportBlockage';
 import Layout from './components/shared/Layout';
 
@@ -102,37 +103,7 @@ function App() {
             }
           />
 
-          {/* DEV1: Add more routes here as you build features
-          <Route
-            path="/requests"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <RequestsPage />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/offers"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <OffersPage />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/search"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <SearchPage />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
+          {/* Messages routes */}
           <Route
             path="/messages"
             element={
@@ -143,7 +114,16 @@ function App() {
               </ProtectedRoute>
             }
           />
-          */}
+          <Route
+            path="/messages/:conversationId"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MessagesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
           {/* DEV2: Blockage reporting */}
           <Route
