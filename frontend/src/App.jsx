@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import VolunteerPage from './pages/VolunteerPage';
+import NeedHelpPage from './pages/NeedHelpPage';
 import Layout from './components/shared/Layout';
 
 // Protected Route wrapper
@@ -72,6 +74,28 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/volunteer"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <VolunteerPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/need-help"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NeedHelpPage />
                 </Layout>
               </ProtectedRoute>
             }
