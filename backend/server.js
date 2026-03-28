@@ -73,6 +73,10 @@ app.use('/api/auth', authRoutes);
 import blockageRoutes from './routes/blockages.js';
 app.use('/api/blockages', blockageRoutes);
 
+// [DEV2] Notification routes
+import notificationRoutes from './routes/notifications.js';
+app.use('/api/notifications', notificationRoutes);
+
 // [DEV2] Weather routes - Developer 2 will implement
 // import weatherRoutes from './routes/weather.js';
 // app.use('/api/weather', weatherRoutes);

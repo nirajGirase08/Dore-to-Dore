@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createBlockage } from '../../services/blockageService';
 
 const BLOCKAGE_TYPES = [
+  { value: 'accident', label: 'Accident' },
   { value: 'tree_down', label: 'Tree Down' },
   { value: 'flooding', label: 'Flooding' },
   { value: 'ice', label: 'Ice' },
@@ -126,7 +127,7 @@ const BlockageReport = ({ onSuccess }) => {
 
   return (
     <form onSubmit={handleSubmit} className="card space-y-5">
-      <h2 className="text-2xl font-bold text-gray-800">Report a Blockage</h2>
+      <h2 className="text-2xl font-bold text-gray-800">Report a Road Hazard</h2>
 
       {error && (
         <div className="bg-red-50 border border-red-300 text-red-700 rounded-lg px-4 py-3 text-sm">

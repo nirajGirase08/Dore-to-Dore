@@ -20,12 +20,12 @@ const Dashboard = () => {
 
         {/* Report Blockage CTA */}
         <div className="inline-flex flex-col items-center gap-2">
-          <p className="text-sm text-gray-500">Saw a road blockage nearby?</p>
+          <p className="text-sm text-gray-500">Spotted a road hazard or accident nearby?</p>
           <Link
             to="/report-blockage"
             className="btn-primary bg-red-600 hover:bg-red-700 py-3 px-8"
           >
-            🚧 Report Blockage
+            ⚠️ Report Road Hazard
           </Link>
         </div>
       </div>

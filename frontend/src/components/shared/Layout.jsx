@@ -1,10 +1,14 @@
 import React from 'react';
 import Navbar from './Navbar';
+import AlertBanner from './AlertBanner';
+import ToastNotification from './ToastNotification';
 
 const Layout = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      <AlertBanner />
+      <ToastNotification />
       <main className="flex-1 bg-gray-50">
         {children}
       </main>

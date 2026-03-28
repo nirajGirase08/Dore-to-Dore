@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -8,6 +9,8 @@ const Navbar = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quickNavOpen, setQuickNavOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const { bellNotifications, unreadCount, markRead, markAllRead } = useNotifications();
 
   const handleLogout = async () => {
     await logout();
@@ -193,8 +196,70 @@ const Navbar = () => {
               to="/report-blockage"
               className="hover:text-primary-200 transition-colors"
             >
-              🚧 Blockages
+              ⚠️ Road Hazards
             </Link>
+
+            {/* Notification Bell */}
+            <div className="relative">
+              <button
+                onClick={() => setBellOpen(!bellOpen)}
+                className="relative p-2 hover:bg-primary-700 rounded-lg transition-colors"
+                title="Notifications"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {bellOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setBellOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl z-20 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+                      <p className="text-sm font-semibold text-gray-700">
+                        Nearby Blockages {bellNotifications.length > 0 && `(${bellNotifications.length})`}
+                      </p>
+                      {bellNotifications.length > 0 && (
+                        <button
+                          onClick={() => { markAllRead(); setBellOpen(false); }}
+                          className="text-xs text-primary-600 hover:underline"
+                        >
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-72 overflow-y-auto">
+                      {bellNotifications.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-6">No nearby blockage alerts</p>
+                      ) : (
+                        bellNotifications.map((n) => (
+                          <div key={n.notification_id} className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 hover:bg-gray-50">
+                            <span className="text-lg mt-0.5">🚧</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-800">{n.title}</p>
+                              {n.message && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>}
+                            </div>
+                            <button
+                              onClick={() => markRead(n.notification_id)}
+                              className="text-gray-400 hover:text-gray-600 text-lg leading-none flex-shrink-0"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* User menu */}
             <div className="flex items-center space-x-4 border-l border-primary-500 pl-6">
@@ -270,7 +335,7 @@ const Navbar = () => {
               className="block hover:text-primary-200 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              🚧 Blockages
+              ⚠️ Road Hazards
             </Link>
 
             <div className="pt-3 border-t border-primary-500">
