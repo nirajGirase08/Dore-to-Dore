@@ -7,7 +7,7 @@ import sequelize, { testConnection } from './config/database.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // ============================================
 // MIDDLEWARE
