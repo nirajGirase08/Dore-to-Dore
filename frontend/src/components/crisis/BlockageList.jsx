@@ -46,11 +46,12 @@ const BlockageList = () => {
       // - low/medium    → visible only to users within 1 mile of the reporter
       const visible = all.filter((b) => {
         if (b.reporter?.user_id === user?.user_id) return true; // always show own reports
-        if (['high', 'critical'].includes(b.severity)) return true;
-        if (!userLat || !userLng) return true;
+        if (['high', 'critical'].includes(b.severity)) return true; // high/critical visible to all
+        // low/medium — only show if within 1 mile of the reporter
+        if (!userLat || !userLng) return false;
         const rLat = b.reporter?.location_lat ? parseFloat(b.reporter.location_lat) : null;
         const rLng = b.reporter?.location_lng ? parseFloat(b.reporter.location_lng) : null;
-        if (!rLat || !rLng) return true;
+        if (!rLat || !rLng) return false;
         return haversineKm(userLat, userLng, rLat, rLng) <= 1.60934;
       });
 

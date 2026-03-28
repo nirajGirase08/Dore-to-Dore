@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 import { geocodeAddress } from '../services/geocodingService.js';
+import { notifyAuthorities } from '../services/emailService.js';
 
 const router = express.Router();
 
@@ -134,6 +135,20 @@ router.post('/', authenticate, async (req, res) => {
 
     // Dispatch in-app notifications without blocking the response
     setImmediate(() => dispatchBlockageNotifications(blockage).catch(console.error));
+
+    // Email authorities for high / critical severity
+    if (['high', 'critical'].includes(severity)) {
+      setImmediate(async () => {
+        try {
+          const sent = await notifyAuthorities(blockage);
+          if (sent) {
+            await blockage.update({ authority_notified: true, notified_at: new Date() });
+          }
+        } catch (err) {
+          console.error('[Email] Authority notify error:', err.message);
+        }
+      });
+    }
 
     res.status(201).json({ success: true, blockage });
   } catch (err) {
