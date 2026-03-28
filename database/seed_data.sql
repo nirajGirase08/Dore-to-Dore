@@ -12,21 +12,21 @@
 -- Volunteers and Users
 INSERT INTO users (email, password_hash, name, phone, gender, location_lat, location_lng, location_address, user_type, reputation_score) VALUES
 -- Password for all: password123 (hashed with bcrypt)
-('sarah.johnson@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Sarah Johnson', '(615) 555-0101', 'Female', 36.1447, -86.8027, 'Vanderbilt Commons Center, Nashville, TN', 'student', 5),
-('mike.chen@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Mike Chen', '(615) 555-0102', 'Male', 36.1433, -86.8015, 'Kissam Center, Vanderbilt University', 'student', 8),
-('emma.rodriguez@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Emma Rodriguez', '(615) 555-0103', 'Female', 36.1373, -86.7970, 'Hillsboro Village, Nashville, TN', 'faculty', 12),
-('james.williams@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'James Williams', '(615) 555-0104', 'Male', 36.1462, -86.8025, 'Vanderbilt Medical Center, Nashville, TN', 'staff', 6),
-('ashley.patel@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Ashley Patel', '(615) 555-0105', 'Female', 36.1439, -86.8055, 'Branscomb Quad, Vanderbilt University', 'student', 3),
-('david.kim@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'David Kim', '(615) 555-0106', 'Male', 36.1484, -86.8003, 'West End Avenue, Nashville, TN', 'student', 10),
-('maria.garcia@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Maria Garcia', '(615) 555-0107', 'Female', 36.1394, -86.8015, '21st Avenue South, Nashville, TN', 'staff', 7),
-('chris.thompson@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Chris Thompson', '(615) 555-0108', 'Male', 36.1627, -86.7816, 'Downtown Nashville, TN', 'faculty', 9),
-('rachel.lee@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Rachel Lee', '(615) 555-0109', 'Female', 36.1493, -86.7977, 'Music Row, Nashville, TN', 'student', 4),
-('alex.brown@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Alex Brown', '(615) 555-0110', 'Non-binary', 36.1426, -86.8038, 'Vanderbilt Commons, Nashville, TN', 'student', 6),
-('jessica.miller@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Jessica Miller', '(615) 555-0111', 'Female', 36.1450, -86.8010, 'Alumni Lawn, Vanderbilt University', 'student', 2),
-('ryan.anderson@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Ryan Anderson', '(615) 555-0112', 'Male', 36.1420, -86.8045, 'Peabody Campus, Vanderbilt University', 'student', 5),
-('sophia.nguyen@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Sophia Nguyen', '(615) 555-0113', 'Female', 36.1380, -86.7985, 'Edgehill Village, Nashville, TN', 'faculty', 11),
-('tyler.davis@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Tyler Davis', '(615) 555-0114', 'Male', 36.1455, -86.8020, 'Stevenson Center, Vanderbilt University', 'student', 3),
-('olivia.martinez@vanderbilt.edu', '$2a$10$rZ5JKzFQ7gE8qKvN0eX5KumFZhGdacHJkKqYvYiHxGxQRPzLwxXBa', 'Olivia Martinez', '(615) 555-0115', 'Female', 36.1445, -86.8000, 'Blair School of Music, Vanderbilt', 'student', 7);
+('sarah.johnson@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Sarah Johnson', '(615) 555-0101', 'Female', 36.1447, -86.8027, 'Vanderbilt Commons Center, Nashville, TN', 'student', 5),
+('mike.chen@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Mike Chen', '(615) 555-0102', 'Male', 36.1433, -86.8015, 'Kissam Center, Vanderbilt University', 'student', 8),
+('emma.rodriguez@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Emma Rodriguez', '(615) 555-0103', 'Female', 36.1373, -86.7970, 'Hillsboro Village, Nashville, TN', 'faculty', 12),
+('james.williams@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'James Williams', '(615) 555-0104', 'Male', 36.1462, -86.8025, 'Vanderbilt Medical Center, Nashville, TN', 'staff', 6),
+('ashley.patel@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Ashley Patel', '(615) 555-0105', 'Female', 36.1439, -86.8055, 'Branscomb Quad, Vanderbilt University', 'student', 3),
+('david.kim@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'David Kim', '(615) 555-0106', 'Male', 36.1484, -86.8003, 'West End Avenue, Nashville, TN', 'student', 10),
+('maria.garcia@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Maria Garcia', '(615) 555-0107', 'Female', 36.1394, -86.8015, '21st Avenue South, Nashville, TN', 'staff', 7),
+('chris.thompson@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Chris Thompson', '(615) 555-0108', 'Male', 36.1627, -86.7816, 'Downtown Nashville, TN', 'faculty', 9),
+('rachel.lee@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Rachel Lee', '(615) 555-0109', 'Female', 36.1493, -86.7977, 'Music Row, Nashville, TN', 'student', 4),
+('alex.brown@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Alex Brown', '(615) 555-0110', 'Non-binary', 36.1426, -86.8038, 'Vanderbilt Commons, Nashville, TN', 'student', 6),
+('jessica.miller@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Jessica Miller', '(615) 555-0111', 'Female', 36.1450, -86.8010, 'Alumni Lawn, Vanderbilt University', 'student', 2),
+('ryan.anderson@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Ryan Anderson', '(615) 555-0112', 'Male', 36.1420, -86.8045, 'Peabody Campus, Vanderbilt University', 'student', 5),
+('sophia.nguyen@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Sophia Nguyen', '(615) 555-0113', 'Female', 36.1380, -86.7985, 'Edgehill Village, Nashville, TN', 'faculty', 11),
+('tyler.davis@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Tyler Davis', '(615) 555-0114', 'Male', 36.1455, -86.8020, 'Stevenson Center, Vanderbilt University', 'student', 3),
+('olivia.martinez@vanderbilt.edu', '$2a$10$iCsqOyw6AQhmnuhBkcuFoeJvTWjl.vTVOVDu845klfjtZywXgZSqS', 'Olivia Martinez', '(615) 555-0115', 'Female', 36.1445, -86.8000, 'Blair School of Music, Vanderbilt', 'student', 7);
 
 -- ============================================
 -- OFFERS (Resources volunteers can provide)
