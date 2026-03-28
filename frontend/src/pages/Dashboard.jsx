@@ -10,39 +10,24 @@ const Dashboard = () => {
   return (
     <div className="container-custom py-8">
       {/* Welcome Section */}
-      <div className="mb-12 text-center">
+      <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold text-gray-800 mb-4">
           Welcome to Crisis Connect, {user?.name}!
         </h1>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-gray-600 mb-6">
           How would you like to help the Vanderbilt community today?
         </p>
-      </div>
-      
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="card bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-          <h3 className="text-lg font-semibold mb-2">Active Requests</h3>
-          <p className="text-4xl font-bold">0</p>
-          <p className="text-sm text-blue-100 mt-2">Items you need help with</p>
+        {/* Report Blockage CTA */}
+        <div className="inline-flex flex-col items-center gap-2">
+          <p className="text-sm text-gray-500">Saw a road blockage nearby?</p>
+          <Link
+            to="/report-blockage"
+            className="btn-primary bg-red-600 hover:bg-red-700 py-3 px-8"
+          >
+            🚧 Report Blockage
+          </Link>
         </div>
-        <Link
-          to="/report-blockage"
-          className="btn-primary bg-red-600 hover:bg-red-700 py-2 px-5 text-sm whitespace-nowrap"
-        >
-          Report Blockage
-        </Link>
-      </div>
-
-      {/* Welcome Section */}
-      <div className="mb-12 text-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">
-          Welcome to Crisis Connect, {user?.name}!
-        </h1>
-        <p className="text-lg text-gray-600">
-          How would you like to help the Vanderbilt community today?
-        </p>
       </div>
 
       {/* Main Action Buttons */}
