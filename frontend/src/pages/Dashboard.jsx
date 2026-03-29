@@ -48,7 +48,7 @@ const Dashboard = () => {
       {/* Top bar — buttons pinned to top right */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-1">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-1">
             Welcome, {user?.name}!
           </h1>
           {/* <p className="text-lg text-gray-600">

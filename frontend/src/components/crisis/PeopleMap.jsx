@@ -204,8 +204,7 @@ const PeopleMap = ({ people, mode, userLat, userLng, radiusKm, radiusLabel, onUs
 
   return (
     <div
-      className="w-full rounded-2xl overflow-hidden shadow-lg border border-gray-200 relative"
-      style={{ height: 400 }}
+      className="w-full rounded-2xl overflow-hidden shadow-lg border border-gray-200 relative h-56 md:h-[400px] lg:h-[480px]"
     >
       <WeatherMapOverlay
         weatherSummary={weatherSummary}

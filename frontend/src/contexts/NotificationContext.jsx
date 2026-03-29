@@ -124,7 +124,11 @@ export const NotificationProvider = ({ children }) => {
 
   const bellNotifications = [
     ...weatherAlerts,
-    ...notifications.filter((n) => n.notification_type === 'blockage_nearby'),
+    // Everything except blockage_alert (→ AlertBanner) and ride_request (→ toast with action buttons)
+    ...notifications.filter((n) =>
+      n.notification_type !== 'blockage_alert' &&
+      n.notification_type !== 'ride_request'
+    ),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   return (

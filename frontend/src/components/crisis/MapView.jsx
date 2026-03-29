@@ -181,7 +181,7 @@ const MapView = ({ contextLabel = null }) => {
   }, [showImpactZone, overlayStyle.borderColor, overlayStyle.fillColor, overlayStyle.fillOpacity, userLat, userLng]);
 
   return (
-    <div className="w-full rounded-2xl overflow-hidden shadow-xl border border-gray-200 relative" style={{ height: 520 }}>
+    <div className="w-full rounded-2xl overflow-hidden shadow-xl border border-gray-200 relative h-64 md:h-[520px] lg:h-[600px]">
       <WeatherMapOverlay
         weatherSummary={weatherSummary}
         overlayStyle={overlayStyle}

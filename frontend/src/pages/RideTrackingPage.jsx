@@ -239,7 +239,7 @@ const RideTrackingPage = () => {
       )}
 
       {/* Map */}
-      <div className="rounded-2xl overflow-hidden shadow-lg border border-gray-200 mb-6" style={{ height: 380 }}>
+      <div className="rounded-2xl overflow-hidden shadow-lg border border-gray-200 mb-6 h-52 md:h-72 lg:h-[380px]">
         <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
       </div>
 

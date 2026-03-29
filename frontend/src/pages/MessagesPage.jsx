@@ -77,7 +77,7 @@ const MessagesPage = () => {
 
   return (
     <div className="container-custom py-8">
-      <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-200px)]">
+      <div className="flex flex-col md:flex-row gap-6 min-h-[500px] h-[calc(100vh-200px)] max-h-[800px]">
         {/* Conversations List */}
         <div className={`${selectedConversation ? 'hidden md:block' : 'block'} w-full md:w-1/3 card overflow-y-auto`}>
           <div className="mb-4 pb-4 border-b">

@@ -27,7 +27,7 @@ const Navbar = () => {
   return (
     <nav className={navClassName}>
       <div className="mx-auto max-w-7xl px-4 sm:px-5">
-        <div className="flex justify-between items-center h-14">
+        <div className="flex justify-between items-center h-20">
           {/* Left Side: Menu + Brand */}
           <div className="flex items-center gap-2.5">
             {/* Quick Navigation Accordion (Hamburger Menu) */}

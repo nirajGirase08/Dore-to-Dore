@@ -115,11 +115,6 @@ const Login = () => {
           </div>
         </div>
 
-        {/* Info box */}
-        <div className="mt-6 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 text-white text-sm">
-          <p className="font-medium mb-2">For Demo/Testing:</p>
-          <p>You can register a new account or use test credentials if available.</p>
-        </div>
       </div>
     </div>
   );
