@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { offersAPI, requestsAPI, conversationsAPI } from '../services/api';
+import { RESOURCE_TYPES } from '../constants/marketplace';
+import AISuggestionModal from '../components/marketplace/AISuggestionModal';
 import CreateOfferModal from '../components/marketplace/CreateOfferModal';
 import FulfillmentModal from '../components/marketplace/FulfillmentModal';
 import OfferCard from '../components/marketplace/OfferCard';
@@ -29,6 +31,25 @@ const ChevronIcon = ({ open }) => (
   </svg>
 );
 
+const mapSuggestedItemToResourceType = (item) => {
+  const normalized = (item || '').toLowerCase().trim();
+  const values = RESOURCE_TYPES.map((type) => type.value);
+
+  if (values.includes(normalized)) return normalized;
+  if (normalized.includes('food') || normalized.includes('meal')) return 'food';
+  if (normalized.includes('water')) return 'water';
+  if (normalized.includes('shelter') || normalized.includes('room')) return 'shelter';
+  if (normalized.includes('blanket')) return 'blankets';
+  if (normalized.includes('cloth')) return 'clothes';
+  if (normalized.includes('medical') || normalized.includes('medicine') || normalized.includes('pharmacy')) return 'medical';
+  if (normalized.includes('transport') || normalized.includes('ride') || normalized.includes('gas')) return 'transport';
+  if (normalized.includes('power') || normalized.includes('charging')) return 'power';
+  if (normalized.includes('baby')) return 'baby_care';
+  if (normalized.includes('hygiene') || normalized.includes('sanitary')) return 'female_hygiene_products';
+  if (normalized.includes('wifi') || normalized.includes('internet')) return 'wifi_access';
+  return 'food';
+};
+
 const VolunteerPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -36,6 +57,8 @@ const VolunteerPage = () => {
   const [allRequests, setAllRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAISuggestionModal, setShowAISuggestionModal] = useState(false);
+  const [aiDraftOffer, setAiDraftOffer] = useState(null);
   const [editingOffer, setEditingOffer] = useState(null);
   const [pendingFulfillment, setPendingFulfillment] = useState(null);
   const [error, setError] = useState('');
@@ -115,7 +138,32 @@ const VolunteerPage = () => {
   }, []);
 
   const handleOfferCreated = () => {
+    setAiDraftOffer(null);
     fetchMyOffers().then((offers) => fetchAllRequests(offers));
+  };
+
+  const handleApplyAISuggestion = (suggestion) => {
+    setAiDraftOffer({
+      title: suggestion.suggested_title || '',
+      description: suggestion.suggested_description || '',
+      location_address: user?.location_address || '',
+      location_lat: user?.location_lat || 36.1447,
+      location_lng: user?.location_lng || -86.8027,
+      target_gender: '',
+      delivery_available: false,
+      available_until: '',
+      items: (suggestion.suggested_items || []).length
+        ? suggestion.suggested_items.map((item) => ({
+            resource_type: mapSuggestedItemToResourceType(item),
+            quantity: 1,
+            notes: '',
+            imageFile: null,
+            imagePreviewUrl: '',
+          }))
+        : [{ resource_type: 'food', quantity: 1, notes: '' }],
+    });
+    setShowAISuggestionModal(false);
+    setShowCreateModal(true);
   };
 
   const handleEditOffer = (offer) => {
@@ -338,7 +386,10 @@ const VolunteerPage = () => {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 gap-6 mb-8">
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            setAiDraftOffer(null);
+            setShowCreateModal(true);
+          }}
           className="card hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200"
         >
           <div className="flex items-center space-x-4">
@@ -350,6 +401,23 @@ const VolunteerPage = () => {
             <div className="text-left">
               <h3 className="text-xl font-semibold text-gray-800">Create New Offer</h3>
               <p className="text-sm text-gray-600">Share what you can provide</p>
+            </div>
+          </div>
+        </button>
+
+        <button
+          onClick={() => setShowAISuggestionModal(true)}
+          className="card hover:shadow-lg transition-shadow bg-gradient-to-br from-cyan-50 to-cyan-100 border-2 border-cyan-200"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="bg-cyan-500 text-white p-4 rounded-full">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2m4-2a8 8 0 11-16 0 8 8 0 0116 0zm-8-8v2m0 12v2m8-8h-2M6 12H4" />
+              </svg>
+            </div>
+            <div className="text-left">
+              <h3 className="text-xl font-semibold text-gray-800">Get AI Generated Suggestions</h3>
+              <p className="text-sm text-gray-600">Use nearby conditions and your history to draft an offer</p>
             </div>
           </div>
         </button>
@@ -538,8 +606,12 @@ const VolunteerPage = () => {
       {/* Create Offer Modal */}
       <CreateOfferModal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={() => {
+          setShowCreateModal(false);
+          setAiDraftOffer(null);
+        }}
         onSuccess={handleOfferCreated}
+        initialData={aiDraftOffer}
       />
 
       <CreateOfferModal
@@ -560,6 +632,13 @@ const VolunteerPage = () => {
         item={pendingFulfillment?.item}
         onClose={() => setPendingFulfillment(null)}
         onConfirm={handleConfirmOfferFulfillment}
+      />
+
+      <AISuggestionModal
+        isOpen={showAISuggestionModal}
+        mode="offer"
+        onClose={() => setShowAISuggestionModal(false)}
+        onApply={handleApplyAISuggestion}
       />
     </div>
   );

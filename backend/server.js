@@ -102,12 +102,16 @@ import medicalFacilitiesRoutes from './routes/medicalFacilities.js';
 app.use('/api/medical-facilities', medicalFacilitiesRoutes);
 
 // [DEV2] Weather routes - Developer 2 will implement
-// import weatherRoutes from './routes/weather.js';
-// app.use('/api/weather', weatherRoutes);
+import weatherRoutes from './routes/weather.js';
+app.use('/api/weather', weatherRoutes);
 
-// [DEV2] Route visualization - Developer 2 will implement
-// import routeRoutes from './routes/routes.js';
-// app.use('/api/routes', routeRoutes);
+// Nearby places for AI/context
+import placesRoutes from './routes/places.js';
+app.use('/api/places', placesRoutes);
+
+// AI suggestion routes
+import aiRoutes from './routes/ai.js';
+app.use('/api/ai', aiRoutes);
 
 // ============================================
 // ERROR HANDLING

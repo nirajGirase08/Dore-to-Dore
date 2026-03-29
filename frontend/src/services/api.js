@@ -306,6 +306,13 @@ export const trustAPI = {
   },
 };
 
+export const aiAPI = {
+  getSuggestion: async (payload) => {
+    const response = await api.post('/ai/suggestions', payload);
+    return response.data;
+  },
+};
+
 // ============================================
 // Blockages API (Developer 2)
 // ============================================
