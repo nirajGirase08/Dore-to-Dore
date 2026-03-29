@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { offersAPI, uploadsAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { RESOURCE_TYPES, TARGET_GENDER_OPTIONS } from '../../constants/marketplace';
+import AddressAutocomplete from '../shared/AddressAutocomplete';
 
 const createEmptyItem = () => ({
   resource_type: 'food',
@@ -19,9 +20,9 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess, initialData = null, mode
   const defaultFormData = {
     title: '',
     description: '',
-    location_address: user?.location_address || '',
-    location_lat: user?.location_lat || 36.1447,
-    location_lng: user?.location_lng || -86.8027,
+    location_address: '',
+    location_lat: null,
+    location_lng: null,
     target_gender: '',
     delivery_available: false,
     available_until: '',
@@ -39,9 +40,9 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess, initialData = null, mode
       setFormData({
         title: initialData.title || '',
         description: initialData.description || '',
-        location_address: initialData.location_address || user?.location_address || '',
-        location_lat: initialData.location_lat || user?.location_lat || 36.1447,
-        location_lng: initialData.location_lng || user?.location_lng || -86.8027,
+        location_address: initialData.location_address || '',
+        location_lat: initialData.location_lat || null,
+        location_lng: initialData.location_lng || null,
         target_gender: initialData.target_gender || '',
         delivery_available: !!initialData.delivery_available,
         available_until: initialData.available_until ? initialData.available_until.slice(0, 16) : '',
@@ -216,20 +217,16 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess, initialData = null, mode
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Location/Address *
-              </label>
-              <input
-                type="text"
-                name="location_address"
-                value={formData.location_address}
-                onChange={handleChange}
-                required
-                className="input-field"
-                placeholder="Your location"
-              />
-            </div>
+            <AddressAutocomplete
+              address={formData.location_address}
+              coords={formData.location_lat ? { lat: formData.location_lat, lng: formData.location_lng } : null}
+              onChange={(address, lat, lng) =>
+                setFormData((f) => ({ ...f, location_address: address, location_lat: lat, location_lng: lng }))
+              }
+              label="Location/Address"
+              required
+              placeholder="Your location"
+            />
 
             <div className="flex items-center">
               <input

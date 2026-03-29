@@ -8,6 +8,7 @@ import Conversation from './Conversation.js';
 import Message from './Message.js';
 import AssistanceTransaction from './AssistanceTransaction.js';
 import AssistanceFeedback from './AssistanceFeedback.js';
+import RideRequest from './RideRequest.js';
 
 // User - Offer associations
 User.hasMany(Offer, { foreignKey: 'user_id', as: 'offers' });
@@ -47,4 +48,10 @@ AssistanceFeedback.belongsTo(AssistanceTransaction, { foreignKey: 'transaction_i
 AssistanceFeedback.belongsTo(User, { foreignKey: 'reviewer_user_id', as: 'reviewer' });
 AssistanceFeedback.belongsTo(User, { foreignKey: 'reviewee_user_id', as: 'reviewee' });
 
-export { User, Offer, OfferItem, Request, RequestItem, Conversation, Message, AssistanceTransaction, AssistanceFeedback };
+// RideRequest associations
+RideRequest.belongsTo(User, { foreignKey: 'requester_id', as: 'requester' });
+RideRequest.belongsTo(User, { foreignKey: 'driver_id', as: 'driver' });
+User.hasMany(RideRequest, { foreignKey: 'requester_id', as: 'ride_requests' });
+User.hasMany(RideRequest, { foreignKey: 'driver_id', as: 'driven_rides' });
+
+export { User, Offer, OfferItem, Request, RequestItem, Conversation, Message, AssistanceTransaction, AssistanceFeedback, RideRequest };

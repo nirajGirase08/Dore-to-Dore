@@ -6,6 +6,7 @@ import { conversationsAPI, trustAPI } from '../services/api';
 import PendingFeedbackSection from '../components/shared/PendingFeedbackSection';
 import TrustSummary from '../components/shared/TrustSummary';
 import MapView from '../components/crisis/MapView';
+import EmergencyRideModal from '../components/rides/EmergencyRideModal';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -13,6 +14,7 @@ const Dashboard = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [trustSummary, setTrustSummary] = useState(null);
   const [pendingFeedback, setPendingFeedback] = useState([]);
+  const [showRideModal, setShowRideModal] = useState(false);
 
   const loadTrust = async () => {
     try {
@@ -92,6 +94,20 @@ const Dashboard = () => {
             )}
           </button>
         </div>
+      </div>
+
+      {/* Emergency Ride SOS Banner */}
+      <div className="mb-8 rounded-2xl bg-gradient-to-r from-red-600 to-red-700 p-6 text-white shadow-xl flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold mb-1">🚨 Need an Emergency Ride?</h2>
+          <p className="text-red-100 text-sm">Request a ride to the hospital or anywhere — volunteers will respond immediately</p>
+        </div>
+        <button
+          onClick={() => setShowRideModal(true)}
+          className="flex-shrink-0 ml-4 bg-white text-red-600 font-bold px-6 py-3 rounded-xl hover:bg-red-50 transition-colors shadow-md text-sm"
+        >
+          Request Ride →
+        </button>
       </div>
 
       {/* Main Action Buttons */}
@@ -200,6 +216,7 @@ const Dashboard = () => {
           </span>
         </div>
       </div>
+      <EmergencyRideModal isOpen={showRideModal} onClose={() => setShowRideModal(false)} />
     </div>
   );
 };

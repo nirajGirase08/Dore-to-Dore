@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import AddressAutocomplete from '../components/shared/AddressAutocomplete';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ const Register = () => {
     gender: 'prefer_not_to_answer',
     user_type: 'student',
     location_address: '',
+    location_lat: null,
+    location_lng: null,
   });
 
   const [error, setError] = useState('');
@@ -198,20 +201,14 @@ const Register = () => {
               </select>
             </div>
 
-            <div>
-              <label htmlFor="location_address" className="block text-sm font-medium text-gray-700 mb-1">
-                Location/Address (optional)
-              </label>
-              <input
-                type="text"
-                id="location_address"
-                name="location_address"
-                value={formData.location_address}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="Vanderbilt Dorm, Nashville, TN"
-              />
-            </div>
+            <AddressAutocomplete
+              address={formData.location_address}
+              coords={formData.location_lat ? { lat: formData.location_lat, lng: formData.location_lng } : null}
+              onChange={(address, lat, lng) =>
+                setFormData((f) => ({ ...f, location_address: address, location_lat: lat, location_lng: lng }))
+              }
+              placeholder="Vanderbilt Dorm, Nashville, TN"
+            />
 
             <button
               type="submit"

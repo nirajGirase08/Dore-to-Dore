@@ -335,6 +335,30 @@ CREATE TABLE IF NOT EXISTS authority_notifications (
 CREATE INDEX idx_authority_notifications_authority ON authority_notifications(authority_id);
 CREATE INDEX idx_authority_notifications_blockage ON authority_notifications(blockage_id);
 
+-- Ride Requests Table
+CREATE TABLE IF NOT EXISTS ride_requests (
+    ride_request_id SERIAL PRIMARY KEY,
+    requester_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    driver_id INT REFERENCES users(user_id),
+    pickup_lat DECIMAL(10, 8) NOT NULL,
+    pickup_lng DECIMAL(11, 8) NOT NULL,
+    pickup_address TEXT,
+    destination_lat DECIMAL(10, 8) NOT NULL,
+    destination_lng DECIMAL(11, 8) NOT NULL,
+    destination_address TEXT,
+    urgency VARCHAR(20) DEFAULT 'urgent', -- emergency, urgent, normal
+    notes TEXT,
+    status VARCHAR(30) DEFAULT 'pending', -- pending, accepted, en_route, picked_up, completed, cancelled
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    accepted_at TIMESTAMP,
+    completed_at TIMESTAMP
+);
+
+CREATE INDEX idx_ride_requests_requester ON ride_requests(requester_id);
+CREATE INDEX idx_ride_requests_driver ON ride_requests(driver_id);
+CREATE INDEX idx_ride_requests_status ON ride_requests(status);
+
 -- ============================================
 -- SEED DATA (Optional - for testing)
 -- ============================================

@@ -25,8 +25,8 @@ app.use(cors({
 }));
 
 // Body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Request logging middleware (development)
@@ -100,6 +100,9 @@ app.use('/api/notifications', notificationRoutes);
 // [DEV2] Medical facilities proxy (Overpass API — avoids browser CORS)
 import medicalFacilitiesRoutes from './routes/medicalFacilities.js';
 app.use('/api/medical-facilities', medicalFacilitiesRoutes);
+
+import ridesRoutes from './routes/rides.js';
+app.use('/api/rides', ridesRoutes);
 
 // [DEV2] Weather routes - Developer 2 will implement
 // import weatherRoutes from './routes/weather.js';

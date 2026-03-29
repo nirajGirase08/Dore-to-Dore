@@ -168,6 +168,23 @@ const Navbar = () => {
                       </div>
                     </Link>
 
+                    <Link
+                      to="/rides"
+                      onClick={() => setQuickNavOpen(false)}
+                      className={`flex items-center px-4 py-3 hover:bg-gray-50 transition-colors ${
+                        location.pathname.startsWith('/rides') ? 'bg-red-50' : ''
+                      }`}
+                    >
+                      <svg className="w-5 h-5 mr-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                      <div>
+                        <p className="text-sm font-medium text-gray-800">Ride Requests</p>
+                        <p className="text-xs text-gray-500">Give or get emergency rides</p>
+                      </div>
+                    </Link>
+
                     {/* DEV1: Add your additional pages here */}
                     {/* DEV2: Add your pages here */}
                   </div>
@@ -219,6 +236,12 @@ const Navbar = () => {
             */}
 
             {/* DEV2: Navigation links */}
+            <Link
+              to="/rides"
+              className="hover:text-primary-200 transition-colors"
+            >
+              🚗 Rides
+            </Link>
             <Link
               to="/report-blockage"
               className="hover:text-primary-200 transition-colors"
@@ -427,6 +450,13 @@ const Navbar = () => {
 
             {/* DEV1: Add your mobile navigation links here */}
             {/* DEV2: Mobile navigation */}
+            <Link
+              to="/rides"
+              className="block hover:text-primary-200 transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              🚗 Rides
+            </Link>
             <Link
               to="/report-blockage"
               className="block hover:text-primary-200 transition-colors"

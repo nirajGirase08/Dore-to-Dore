@@ -106,6 +106,7 @@ router.post('/', authenticate, async (req, res) => {
       location_lat,
       location_lng,
       expires_at,
+      photo_url,
     } = req.body;
 
     let lat = location_lat != null ? parseFloat(location_lat) : null;
@@ -130,6 +131,7 @@ router.post('/', authenticate, async (req, res) => {
       location_lat: lat,
       location_lng: lng,
       location_address: address,
+      photo_url: photo_url || null,
       updated_at: new Date(),
       expires_at: expires_at || null,
     });
