@@ -115,7 +115,7 @@ router.get('/', async (req, res) => {
         {
           model: User,
           as: 'user',
-          attributes: ['user_id', 'name', 'email', 'phone', 'reputation_score'],
+          attributes: ['user_id', 'name', 'email', 'phone', 'reputation_score', 'location_lat', 'location_lng', 'location_address'],
         },
       ],
       order: [

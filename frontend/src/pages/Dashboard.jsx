@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import MapView from '../components/crisis/MapView';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -91,65 +92,43 @@ const Dashboard = () => {
         </button>
       </div>
 
-      {/* Info Section for Developer 2 */}
-      <div className="max-w-4xl mx-auto">
-        <div className="card bg-gray-50 border-2 border-dashed border-gray-300">
-          <h3 className="text-xl font-semibold text-gray-700 mb-4 text-center">
-            Additional Features Coming Soon
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm text-gray-600">
-            <div className="p-4">
-              <svg
-                className="w-12 h-12 mx-auto mb-2 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                />
-              </svg>
-              <p className="font-medium">Interactive Map</p>
-              <p className="text-xs text-gray-500 mt-1">Developer 2</p>
-            </div>
-            <div className="p-4">
-              <svg
-                className="w-12 h-12 mx-auto mb-2 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
-              <p className="font-medium">Blockage Reports</p>
-              <p className="text-xs text-gray-500 mt-1">Developer 2</p>
-            </div>
-            <div className="p-4">
-              <svg
-                className="w-12 h-12 mx-auto mb-2 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                />
-              </svg>
-              <p className="font-medium">Weather Alerts</p>
-              <p className="text-xs text-gray-500 mt-1">Developer 2</p>
-            </div>
+      {/* Crisis Map */}
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Nashville Crisis Map</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Active road hazards · Updates every 30 seconds
+            </p>
           </div>
+          <Link to="/report-blockage" className="btn-secondary text-sm py-2 px-4">
+            View All Hazards →
+          </Link>
+        </div>
+        <MapView />
+        {/* Map legend */}
+        <div className="flex flex-wrap gap-4 mt-3 text-xs text-gray-600">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-3 h-3 rounded-full bg-blue-500"></span> Your location
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-3 h-3 rounded-full bg-red-700"></span> Critical hazard
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-3 h-3 rounded-full bg-red-500"></span> High hazard
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-3 h-3 rounded-full bg-orange-500"></span> Medium hazard
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-3 h-3 rounded-full bg-green-600"></span> Low hazard
+          </span>
+          <span className="flex items-center gap-1.5">
+            🏥 Hospital
+          </span>
+          <span className="flex items-center gap-1.5">
+            🩺 Urgent Care / Clinic
+          </span>
         </div>
       </div>
     </div>

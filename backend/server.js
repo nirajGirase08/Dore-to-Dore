@@ -83,6 +83,10 @@ app.use('/api/blockages', blockageRoutes);
 import notificationRoutes from './routes/notifications.js';
 app.use('/api/notifications', notificationRoutes);
 
+// [DEV2] Medical facilities proxy (Overpass API — avoids browser CORS)
+import medicalFacilitiesRoutes from './routes/medicalFacilities.js';
+app.use('/api/medical-facilities', medicalFacilitiesRoutes);
+
 // [DEV2] Weather routes - Developer 2 will implement
 // import weatherRoutes from './routes/weather.js';
 // app.use('/api/weather', weatherRoutes);

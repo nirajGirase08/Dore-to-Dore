@@ -5,6 +5,7 @@ import { requestsAPI, offersAPI, conversationsAPI } from '../services/api';
 import CreateRequestModal from '../components/marketplace/CreateRequestModal';
 import RequestCard from '../components/marketplace/RequestCard';
 import OfferCard from '../components/marketplace/OfferCard';
+import PeopleMap, { RADIUS_OPTIONS, haversineKm } from '../components/crisis/PeopleMap';
 
 const ACTIVE_STATUSES = ['active', 'in_progress', 'partially_fulfilled'];
 const FULFILLED_STATUSES = ['fulfilled'];
@@ -19,6 +20,7 @@ const NeedHelpPage = () => {
   const [showBrowseOffers, setShowBrowseOffers] = useState(false);
   const [error, setError] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [radiusKm, setRadiusKm] = useState(RADIUS_OPTIONS[2].km); // default 5 miles
 
   // Fetch user's requests
   const fetchMyRequests = async () => {
@@ -539,6 +541,59 @@ const NeedHelpPage = () => {
           </div>
         </div>
       )}
+
+      {/* Volunteers Nearby — Map */}
+      {(() => {
+        const userLat = user?.location_lat ? parseFloat(user.location_lat) : null;
+        const userLng = user?.location_lng ? parseFloat(user.location_lng) : null;
+
+        const visibleOnMap = allOffers.filter((o) => {
+          const u = o.user;
+          if (!u?.location_lat || !u?.location_lng) return false;
+          if (radiusKm === null) return true;
+          if (!userLat || !userLng) return true;
+          return haversineKm(userLat, userLng, parseFloat(u.location_lat), parseFloat(u.location_lng)) <= radiusKm;
+        });
+
+        const selected = RADIUS_OPTIONS.find((o) => o.km === radiusKm) || RADIUS_OPTIONS[2];
+
+        return (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">Volunteers Nearby</h2>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {visibleOnMap.length} volunteer{visibleOnMap.length !== 1 ? 's' : ''} within {selected.label}
+                </p>
+              </div>
+              <select
+                className="input-field w-auto"
+                value={radiusKm ?? ''}
+                onChange={(e) =>
+                  setRadiusKm(e.target.value === '' ? null : parseFloat(e.target.value))
+                }
+              >
+                {RADIUS_OPTIONS.map((r) => (
+                  <option key={r.label} value={r.km ?? ''}>{r.label}</option>
+                ))}
+              </select>
+            </div>
+            <PeopleMap
+              people={visibleOnMap}
+              mode="need-help"
+              userLat={userLat}
+              userLng={userLng}
+              radiusKm={radiusKm}
+              radiusLabel={selected.label}
+            />
+            <p className="text-xs text-gray-500 mt-2 flex items-center gap-3">
+              <span className="inline-flex items-center gap-1"><span style={{color:'#16a34a',fontWeight:700}}>▲</span> Volunteer</span>
+              <span>📍 Your location</span>
+              <span className="text-blue-400">— — Radius boundary</span>
+            </p>
+          </div>
+        );
+      })()}
 
       {/* Create Request Modal */}
       <CreateRequestModal

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createBlockage } from '../../services/blockageService';
 
 const BLOCKAGE_TYPES = [
@@ -27,11 +27,29 @@ const BlockageReport = ({ onSuccess }) => {
     location_address: '',
     notify_authorities: true,
   });
-  const [coords, setCoords] = useState({ lat: null, lng: null });
+  const [coords, setCoords]         = useState({ lat: null, lng: null });
   const [geoLoading, setGeoLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  const [error, setError]           = useState(null);
+  const [success, setSuccess]       = useState(null);
+
+  // Address autocomplete
+  const [suggestions, setSuggestions]     = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const debounceTimer = useRef(null);
+  const wrapperRef    = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -40,45 +58,77 @@ const BlockageReport = ({ onSuccess }) => {
     }
     setGeoLoading(true);
     setError(null);
+    setSuggestions([]);
+    setShowSuggestions(false);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         setCoords({ lat, lng });
-
-        // Reverse geocode to get a human-readable address
         try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
-          );
+          const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
           const data = await res.json();
-          if (data.display_name) {
-            setForm((f) => ({ ...f, location_address: data.display_name }));
-          } else {
-            setForm((f) => ({ ...f, location_address: '' }));
-          }
+          setForm((f) => ({ ...f, location_address: data.display_name || '' }));
         } catch {
           setForm((f) => ({ ...f, location_address: '' }));
         }
-
         setGeoLoading(false);
       },
       (err) => {
-        if (err.code === err.PERMISSION_DENIED) {
-          setError('Location access denied. Please allow location access or enter the address manually.');
-        } else {
-          setError('Unable to retrieve your location. Please enter the address manually.');
-        }
+        setError(
+          err.code === err.PERMISSION_DENIED
+            ? 'Location access denied. Please allow location access or enter the address manually.'
+            : 'Unable to retrieve your location. Please enter the address manually.'
+        );
         setGeoLoading(false);
       },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
     );
   };
 
+  const handleAddressChange = (e) => {
+    const value = e.target.value;
+    setForm((f) => ({ ...f, location_address: value }));
+    setCoords({ lat: null, lng: null });
+
+    clearTimeout(debounceTimer.current);
+
+    if (value.trim().length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    debounceTimer.current = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        // viewbox biases results toward Nashville metro; bounded=0 still allows
+        // results outside the box if nothing local matches
+        const NASHVILLE_VIEWBOX = '-87.10,36.40,-86.50,35.96'; // left,top,right,bottom
+        const res  = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)}&format=json&limit=5&countrycodes=us&addressdetails=1&viewbox=${NASHVILLE_VIEWBOX}&bounded=1`
+        );
+        const data = await res.json();
+        setSuggestions(data);
+        setShowSuggestions(data.length > 0);
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 350);
+  };
+
+  const handleSelectSuggestion = (item) => {
+    setForm((f) => ({ ...f, location_address: item.display_name }));
+    setCoords({ lat: parseFloat(item.lat), lng: parseFloat(item.lon) });
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((f) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
-    if (name === 'location_address') setCoords({ lat: null, lng: null });
   };
 
   const handleSubmit = async (e) => {
@@ -94,14 +144,15 @@ const BlockageReport = ({ onSuccess }) => {
     setSubmitting(true);
     try {
       const payload = {
-        blockage_type: form.blockage_type,
-        severity: form.severity,
-        description: form.description,
+        blockage_type:      form.blockage_type,
+        severity:           form.severity,
+        description:        form.description,
         notify_authorities: form.notify_authorities,
       };
       if (coords.lat) {
-        payload.location_lat = coords.lat;
-        payload.location_lng = coords.lng;
+        payload.location_lat     = coords.lat;
+        payload.location_lng     = coords.lng;
+        payload.location_address = form.location_address;
       } else {
         payload.location_address = form.location_address;
       }
@@ -121,9 +172,7 @@ const BlockageReport = ({ onSuccess }) => {
       <div className="card text-center">
         <div className="text-5xl mb-4">✅</div>
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Blockage Reported!</h2>
-        <p className="text-gray-600 mb-2">
-          Your report has been submitted successfully.
-        </p>
+        <p className="text-gray-600 mb-2">Your report has been submitted successfully.</p>
         {success.authority_notified && (
           <p className="text-green-700 font-semibold mb-4">✓ Authorities have been notified.</p>
         )}
@@ -131,13 +180,7 @@ const BlockageReport = ({ onSuccess }) => {
           className="btn-primary"
           onClick={() => {
             setSuccess(null);
-            setForm({
-              blockage_type: '',
-              severity: '',
-              description: '',
-              location_address: '',
-              notify_authorities: true,
-            });
+            setForm({ blockage_type: '', severity: '', description: '', location_address: '', notify_authorities: true });
             setCoords({ lat: null, lng: null });
           }}
         >
@@ -168,26 +211,62 @@ const BlockageReport = ({ onSuccess }) => {
         >
           {geoLoading ? 'Getting location…' : '📍 Use Current Location'}
         </button>
+
         {coords.lat && (
           <p className="text-xs text-green-700 mb-2">
             ✓ GPS coordinates captured ({coords.lat.toFixed(5)}, {coords.lng.toFixed(5)})
           </p>
         )}
-        <input
-          type="text"
-          name="location_address"
-          value={form.location_address}
-          onChange={handleChange}
-          placeholder="Or enter address (e.g. 21st Ave S & Broadway)"
-          className="input-field"
-        />
+
+        {/* Address input with autocomplete */}
+        <div className="relative" ref={wrapperRef}>
+          <input
+            type="text"
+            name="location_address"
+            value={form.location_address}
+            onChange={handleAddressChange}
+            placeholder="Search address (e.g. 21st Ave S & Broadway)"
+            className="input-field"
+            autoComplete="off"
+            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+          />
+
+          {searchLoading && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+              Searching…
+            </span>
+          )}
+
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+              {suggestions.map((item) => (
+                <li
+                  key={item.place_id}
+                  onMouseDown={() => handleSelectSuggestion(item)}
+                  className="px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0"
+                >
+                  <span className="font-medium text-gray-900">
+                    {item.address?.road || item.address?.amenity || item.name || ''}
+                    {(item.address?.road || item.address?.amenity || item.name) ? ', ' : ''}
+                  </span>
+                  <span className="text-gray-500">
+                    {[item.address?.city || item.address?.town || item.address?.village, item.address?.state]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         {coords.lat && (
           <button
             type="button"
             onClick={() => { setCoords({ lat: null, lng: null }); setForm((f) => ({ ...f, location_address: '' })); }}
             className="text-xs text-gray-500 mt-1 underline"
           >
-            Clear GPS and enter address instead
+            Clear and search again
           </button>
         )}
       </div>
