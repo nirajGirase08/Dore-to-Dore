@@ -34,6 +34,10 @@ const Message = sequelize.define('Message', {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
   },
+  created_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
 }, {
   tableName: 'messages',
   timestamps: false,

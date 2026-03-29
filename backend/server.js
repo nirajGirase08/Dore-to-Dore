@@ -1,10 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import sequelize, { testConnection } from './config/database.js';
 
 // Load environment variables
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -22,6 +27,7 @@ app.use(cors({
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Request logging middleware (development)
 if (process.env.NODE_ENV === 'development') {
@@ -74,6 +80,14 @@ app.use('/api/messages', messageRoutes);
 // [DEV1] Conversation routes
 import conversationRoutes from './routes/conversations.js';
 app.use('/api/conversations', conversationRoutes);
+
+// [DEV1] Upload routes
+import uploadRoutes from './routes/uploads.js';
+app.use('/api/uploads', uploadRoutes);
+
+// [DEV1] Trust and feedback routes
+import trustRoutes from './routes/trust.js';
+app.use('/api/trust', trustRoutes);
 
 // [DEV2] Blockage routes
 import blockageRoutes from './routes/blockages.js';

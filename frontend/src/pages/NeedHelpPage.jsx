@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { requestsAPI, offersAPI, conversationsAPI } from '../services/api';
 import CreateRequestModal from '../components/marketplace/CreateRequestModal';
+import FulfillmentModal from '../components/marketplace/FulfillmentModal';
 import RequestCard from '../components/marketplace/RequestCard';
 import OfferCard from '../components/marketplace/OfferCard';
+import { rankOffersForNeeds } from '../utils/matching';
 
 const ACTIVE_STATUSES = ['active', 'in_progress', 'partially_fulfilled'];
 const FULFILLED_STATUSES = ['fulfilled'];
@@ -16,39 +18,41 @@ const NeedHelpPage = () => {
   const [allOffers, setAllOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showBrowseOffers, setShowBrowseOffers] = useState(false);
+  const [editingRequest, setEditingRequest] = useState(null);
+  const [pendingFulfillment, setPendingFulfillment] = useState(null);
   const [error, setError] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [offerSearch, setOfferSearch] = useState('');
+  const getActiveRequests = (requests) => requests.filter((request) => ACTIVE_STATUSES.includes(request.status));
 
   // Fetch user's requests
   const fetchMyRequests = async () => {
     try {
       const response = await requestsAPI.getMy();
-      setMyRequests(response.data || []);
+      const requests = response.data || [];
+      setMyRequests(requests);
+      return requests;
     } catch (err) {
       console.error('Failed to fetch requests:', err);
       setError('Failed to load your requests');
+      return [];
     }
   };
 
   // Fetch all offers for browsing
-  const fetchAllOffers = async () => {
+  const fetchAllOffers = async (requestsForMatching = myRequests) => {
     try {
       const response = await offersAPI.getAll();
       const offers = response.data || [];
 
       // Filter out current user's own offers
       const otherUsersOffers = offers.filter(offer => offer.user_id !== user?.user_id);
-
-      // Calculate match scores for each offer
-      const offersWithScores = otherUsersOffers.map(offer => {
-        const matchScore = calculateMatchScore(offer);
-        return { ...offer, matchScore };
+      const rankedOffers = rankOffersForNeeds({
+        offers: otherUsersOffers,
+        activeRequests: getActiveRequests(requestsForMatching),
+        currentUser: user,
       });
-
-      // Sort by match score (highest first)
-      offersWithScores.sort((a, b) => b.matchScore - a.matchScore);
-      setAllOffers(offersWithScores);
+      setAllOffers(rankedOffers);
     } catch (err) {
       console.error('Failed to fetch offers:', err);
       setError('Failed to load offers');
@@ -65,54 +69,11 @@ const NeedHelpPage = () => {
     }
   };
 
-  // Simple matching algorithm based on resource overlap
-  const calculateMatchScore = (offer) => {
-    if (!myRequests.length || !offer.items?.length) return 0;
-
-    // Get all resource types from user's requests
-    const requestedResources = new Set();
-    myRequests.forEach(request => {
-      request.items?.forEach(item => {
-        if (item.quantity_needed > item.quantity_fulfilled) {
-          requestedResources.add(item.resource_type);
-        }
-      });
-    });
-
-    // Get all resource types from the offer
-    const offeredResources = offer.items
-      .filter(item => item.quantity_remaining > 0)
-      .map(item => item.resource_type);
-
-    // Calculate overlap
-    const matchingResources = offeredResources.filter(resource =>
-      requestedResources.has(resource)
-    );
-
-    // Calculate score as percentage of matched resources
-    const overlapScore = offeredResources.length > 0
-      ? (matchingResources.length / requestedResources.size) * 100
-      : 0;
-
-    // Boost score if delivery is available
-    const deliveryBoost = offer.delivery_available ? 15 : 0;
-
-    // Boost score based on volunteer reputation
-    const reputationBoost = offer.user?.reputation_score > 0
-      ? Math.min(10, offer.user.reputation_score)
-      : 0;
-
-    // Calculate distance factor (placeholder - would use real geolocation)
-    // For now, just return overlap + boosts
-    const finalScore = Math.min(100, Math.round(overlapScore + deliveryBoost + reputationBoost));
-
-    return finalScore;
-  };
-
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await Promise.all([fetchMyRequests(), fetchAllOffers(), fetchUnreadCount()]);
+      const requests = await fetchMyRequests();
+      await Promise.all([fetchAllOffers(requests), fetchUnreadCount()]);
       setLoading(false);
     };
     loadData();
@@ -129,24 +90,38 @@ const NeedHelpPage = () => {
   }, []);
 
   const handleRequestCreated = () => {
-    fetchMyRequests();
-    fetchAllOffers(); // Refresh to recalculate match scores
+    fetchMyRequests().then((requests) => fetchAllOffers(requests));
   };
 
   const handleEditRequest = (request) => {
-    // TODO: Open edit modal
-    alert('Edit functionality coming soon!');
+    setEditingRequest(request);
+  };
+
+  const handleViewRequest = (request) => {
+    navigate(`/requests/${request.request_id}`);
+  };
+
+  const handleViewOffer = (offer) => {
+    navigate(`/offers/${offer.offer_id}`);
   };
 
   const handleFulfillRequestItem = async (request, item) => {
-    if (window.confirm(`Mark "${item.resource_type}" in "${request.title}" as fulfilled?`)) {
-      try {
-        await requestsAPI.fulfillItem(request.request_id, item.item_id);
-        await Promise.all([fetchMyRequests(), fetchAllOffers()]);
-      } catch (err) {
-        console.error('Failed to mark request item as fulfilled:', err);
-        alert('Failed to update item. Please try again.');
-      }
+    setPendingFulfillment({ request, item });
+  };
+
+  const handleConfirmRequestFulfillment = async (payload) => {
+    try {
+      await requestsAPI.fulfillItem(
+        pendingFulfillment.request.request_id,
+        pendingFulfillment.item.item_id,
+        payload
+      );
+      const requests = await fetchMyRequests();
+      await fetchAllOffers(requests);
+      setPendingFulfillment(null);
+    } catch (err) {
+      console.error('Failed to mark request item as fulfilled:', err);
+      throw err;
     }
   };
 
@@ -183,6 +158,24 @@ const NeedHelpPage = () => {
     (request) => !ACTIVE_STATUSES.includes(request.status)
       && !FULFILLED_STATUSES.includes(request.status)
   );
+  const bestMatchOffers = allOffers.filter((offer) => offer.matchScore > 0).slice(0, 3);
+  const filteredOffers = allOffers.filter((offer) => {
+    const query = offerSearch.trim().toLowerCase();
+    if (!query) return true;
+
+    const searchableText = [
+      offer.title,
+      offer.description,
+      offer.location_address,
+      offer.user?.name,
+      ...(offer.items || []).map((item) => `${item.resource_type} ${item.notes || ''}`),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return searchableText.includes(query);
+  });
 
   if (loading) {
     return (
@@ -242,7 +235,7 @@ const NeedHelpPage = () => {
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 gap-6 mb-8">
         <button
           onClick={() => setShowCreateModal(true)}
           className="card hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200"
@@ -270,34 +263,6 @@ const NeedHelpPage = () => {
           </div>
         </button>
 
-        <button
-          onClick={() => setShowBrowseOffers(!showBrowseOffers)}
-          className="card hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200"
-        >
-          <div className="flex items-center space-x-4">
-            <div className="bg-green-500 text-white p-4 rounded-full">
-              <svg
-                className="w-8 h-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </div>
-            <div className="text-left">
-              <h3 className="text-xl font-semibold text-gray-800">
-                {showBrowseOffers ? 'Hide' : 'Search'} Available Help
-              </h3>
-              <p className="text-sm text-gray-600">Browse volunteer offers</p>
-            </div>
-          </div>
-        </button>
       </div>
 
       {/* My Requests Section */}
@@ -347,6 +312,7 @@ const NeedHelpPage = () => {
                       showContact={false}
                       onEdit={handleEditRequest}
                       onFulfillItem={handleFulfillRequestItem}
+                      onView={handleViewRequest}
                     />
                   ))}
                 </div>
@@ -368,6 +334,7 @@ const NeedHelpPage = () => {
                       key={request.request_id}
                       request={request}
                       showContact={false}
+                      onView={handleViewRequest}
                     />
                   ))}
                 </div>
@@ -389,6 +356,7 @@ const NeedHelpPage = () => {
                       key={request.request_id}
                       request={request}
                       showContact={false}
+                      onView={handleViewRequest}
                     />
                   ))}
                 </div>
@@ -398,59 +366,69 @@ const NeedHelpPage = () => {
         )}
       </div>
 
-      {/* Browse Offers Section */}
-      {showBrowseOffers && (
+      {activeRequests.length > 0 && bestMatchOffers.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Available Help
-            {myRequests.length > 0 && (
-              <span className="text-sm font-normal text-gray-600 ml-2">
-                (Sorted by match score)
-              </span>
-            )}
-          </h2>
-          {allOffers.length === 0 ? (
-            <div className="card bg-gray-50 border-2 border-dashed border-gray-300">
-              <div className="text-center py-12">
-                <svg
-                  className="w-16 h-16 mx-auto mb-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                  />
-                </svg>
-                <p className="text-gray-600">No active offers at the moment</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              {myRequests.length > 0 && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <span className="font-semibold">💡 Tip:</span> Offers are sorted by how well they match your requests.
-                    Higher match scores (80%+) are shown first!
-                  </p>
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {allOffers.map((offer) => (
-                  <OfferCard
-                    key={offer.offer_id}
-                    offer={offer}
-                    onContact={handleContactOffer}
-                  />
-                ))}
-              </div>
-            </>
-          )}
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Best Matches</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Ranked by item overlap, gender preference, urgency, and location
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {bestMatchOffers.map((offer) => (
+              <OfferCard
+                key={`best-offer-${offer.offer_id}`}
+                offer={offer}
+                matchScore={offer.matchScore}
+                matchDistanceKm={offer.matchDistanceKm}
+                onContact={handleContactOffer}
+                onView={handleViewOffer}
+              />
+            ))}
+          </div>
         </div>
       )}
+
+      <div className="mb-8">
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">All Available Help</h2>
+            <p className="text-sm text-gray-600">
+              Search and browse all eligible offers, sorted by match score
+            </p>
+          </div>
+          <div className="w-full md:max-w-sm">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Search Offers
+            </label>
+            <input
+              type="text"
+              value={offerSearch}
+              onChange={(e) => setOfferSearch(e.target.value)}
+              placeholder="Search by keyword, item, person, or location"
+              className="input-field"
+            />
+          </div>
+        </div>
+        {filteredOffers.length === 0 ? (
+          <div className="card bg-gray-50 border-2 border-dashed border-gray-300">
+            <div className="text-center py-12">
+              <p className="text-gray-600">No matching offers found</p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredOffers.map((offer) => (
+              <OfferCard
+                key={offer.offer_id}
+                offer={offer}
+                matchScore={activeRequests.length > 0 ? offer.matchScore : undefined}
+                matchDistanceKm={offer.matchDistanceKm}
+                onContact={handleContactOffer}
+                onView={handleViewOffer}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Urgency Level Indicators */}
       {myRequests.length === 0 && (
@@ -545,6 +523,26 @@ const NeedHelpPage = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSuccess={handleRequestCreated}
+      />
+
+      <CreateRequestModal
+        isOpen={!!editingRequest}
+        onClose={() => setEditingRequest(null)}
+        onSuccess={() => {
+          setEditingRequest(null);
+          handleRequestCreated();
+        }}
+        initialData={editingRequest}
+        mode="edit"
+      />
+
+      <FulfillmentModal
+        isOpen={!!pendingFulfillment}
+        mode="request"
+        entity={pendingFulfillment?.request}
+        item={pendingFulfillment?.item}
+        onClose={() => setPendingFulfillment(null)}
+        onConfirm={handleConfirmRequestFulfillment}
       />
     </div>
   );

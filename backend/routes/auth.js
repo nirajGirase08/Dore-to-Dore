@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+const VALID_GENDERS = ['male', 'female', 'prefer_not_to_answer'];
 
 /**
  * @route   POST /api/auth/register
@@ -30,6 +31,13 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Please provide email, password, and name.',
+      });
+    }
+
+    if (!gender || !VALID_GENDERS.includes(gender)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please select a valid gender option.',
       });
     }
 
@@ -167,6 +175,62 @@ router.get('/me', authenticate, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get user information.',
+    });
+  }
+});
+
+/**
+ * @route   PUT /api/auth/profile
+ * @desc    Update current authenticated user's profile
+ * @access  Private
+ */
+router.put('/profile', authenticate, async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      phone,
+      location_address,
+    } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Name and email are required.',
+      });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const trimmedName = name.trim();
+
+    const existingUser = await User.findOne({ where: { email: normalizedEmail } });
+    if (existingUser && existingUser.user_id !== req.userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Another account is already using this email.',
+      });
+    }
+
+    const user = await User.findByPk(req.userId);
+    await user.update({
+      name: trimmedName,
+      email: normalizedEmail,
+      phone: phone?.trim() || null,
+      location_address: location_address?.trim() || null,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        user: user.toSafeObject(),
+      },
+      message: 'Profile updated successfully.',
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update profile.',
     });
   }
 });

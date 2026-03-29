@@ -1,16 +1,5 @@
 import React from 'react';
-
-const resourceIcons = {
-  food: '🍲',
-  water: '💧',
-  shelter: '🏠',
-  blankets: '🛏️',
-  clothes: '👕',
-  medical: '💊',
-  transport: '🚗',
-  power: '🔋',
-  other: '📦',
-};
+import { RESOURCE_ICONS } from '../../constants/marketplace';
 
 const urgencyColors = {
   low: 'bg-gray-100 text-gray-800 border-gray-300',
@@ -26,9 +15,20 @@ const urgencyLabels = {
   critical: '🚨 CRITICAL',
 };
 
-const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfillItem, matchScore }) => {
+const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfillItem, onView, matchScore, matchDistanceKm }) => {
   return (
-    <div className="card hover:shadow-lg transition-shadow relative">
+    <div
+      className={`card relative transition-shadow ${onView ? 'cursor-pointer hover:shadow-lg' : 'hover:shadow-lg'}`}
+      onClick={() => onView?.(request)}
+      role={onView ? 'button' : undefined}
+      tabIndex={onView ? 0 : undefined}
+      onKeyDown={(event) => {
+        if (onView && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          onView(request);
+        }
+      }}
+    >
       {/* Match Score Badge */}
       {matchScore !== undefined && (
         <div className="absolute top-4 right-4">
@@ -74,7 +74,7 @@ const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfill
             <div key={item.item_id} className="flex items-center justify-between text-sm">
               <div className="flex-1 pr-3">
                 <span>
-                  <span className="mr-2">{resourceIcons[item.resource_type] || '📦'}</span>
+                  <span className="mr-2">{RESOURCE_ICONS[item.resource_type] || '📦'}</span>
                   <span className="capitalize">{item.resource_type}</span>
                   {item.notes && <span className="text-gray-500 text-xs ml-1">({item.notes})</span>}
                 </span>
@@ -90,7 +90,10 @@ const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfill
               </div>
               {!showContact && onFulfillItem && item.status !== 'fulfilled' && (
                 <button
-                  onClick={() => onFulfillItem(request, item)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onFulfillItem(request, item);
+                  }}
                   className="px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-700 transition-colors"
                 >
                   Fulfill Item
@@ -109,11 +112,19 @@ const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfill
             <p className="text-xs text-gray-500">
               📍 {request.location_address}
             </p>
+            {request.target_gender && (
+              <p className="text-xs text-purple-600">
+                Audience: {request.target_gender === 'male' ? 'Male only' : 'Female only'}
+              </p>
+            )}
           </div>
           <div className="flex gap-2">
             {showContact && onContact && (
               <button
-                onClick={() => onContact(request)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onContact(request);
+                }}
                 className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Help
@@ -123,13 +134,27 @@ const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfill
               <>
                 {onEdit && request.status !== 'fulfilled' && (
                   <button
-                    onClick={() => onEdit(request)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onEdit(request);
+                    }}
                     className="px-3 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Edit
                   </button>
                 )}
               </>
+            )}
+            {onView && (
+              <button
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onView(request);
+                }}
+                className="px-3 py-2 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                View Details
+              </button>
             )}
           </div>
         </div>
@@ -139,6 +164,11 @@ const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfill
       <p className="text-xs text-gray-500 mt-2">
         Posted: {new Date(request.created_at).toLocaleDateString()}
       </p>
+      {matchDistanceKm !== null && matchDistanceKm !== undefined && (
+        <p className="text-xs text-gray-500 mt-1">
+          Approx. distance: {matchDistanceKm.toFixed(1)} km
+        </p>
+      )}
     </div>
   );
 };

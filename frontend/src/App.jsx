@@ -9,6 +9,9 @@ import VolunteerPage from './pages/VolunteerPage';
 import NeedHelpPage from './pages/NeedHelpPage';
 import MessagesPage from './pages/MessagesPage';
 import ReportBlockage from './pages/ReportBlockage';
+import ProfilePage from './pages/ProfilePage';
+import OfferDetailPage from './pages/OfferDetailPage';
+import RequestDetailPage from './pages/RequestDetailPage';
 import Layout from './components/shared/Layout';
 
 // Protected Route wrapper
@@ -122,6 +125,39 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <MessagesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ProfilePage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/offers/:offerId"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <OfferDetailPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/requests/:requestId"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <RequestDetailPage />
                 </Layout>
               </ProtectedRoute>
             }

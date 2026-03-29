@@ -1,18 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { requestsAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
-
-const RESOURCE_TYPES = [
-  { value: 'food', label: 'Food' },
-  { value: 'water', label: 'Water' },
-  { value: 'shelter', label: 'Shelter' },
-  { value: 'blankets', label: 'Blankets' },
-  { value: 'clothes', label: 'Clothes' },
-  { value: 'medical', label: 'Medical Supplies' },
-  { value: 'transport', label: 'Transportation' },
-  { value: 'power', label: 'Power/Charging' },
-  { value: 'other', label: 'Other' },
-];
+import { RESOURCE_TYPES, TARGET_GENDER_OPTIONS } from '../../constants/marketplace';
 
 const URGENCY_LEVELS = [
   { value: 'low', label: 'Low', color: 'text-gray-700' },
@@ -21,23 +10,55 @@ const URGENCY_LEVELS = [
   { value: 'critical', label: 'Critical', color: 'text-red-700' },
 ];
 
-const CreateRequestModal = ({ isOpen, onClose, onSuccess }) => {
+const createEmptyItem = () => ({ resource_type: 'food', quantity: 1, notes: '' });
+
+const CreateRequestModal = ({ isOpen, onClose, onSuccess, initialData = null, mode = 'create' }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const [formData, setFormData] = useState({
+  const defaultFormData = {
     title: '',
     description: '',
     urgency_level: 'medium',
     location_address: user?.location_address || '',
     location_lat: user?.location_lat || 36.1447,
     location_lng: user?.location_lng || -86.8027,
-  });
+    target_gender: '',
+  };
 
-  const [items, setItems] = useState([
-    { resource_type: 'food', quantity: 1, notes: '' },
-  ]);
+  const [formData, setFormData] = useState(defaultFormData);
+  const [items, setItems] = useState([createEmptyItem()]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    if (initialData) {
+      setFormData({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        urgency_level: initialData.urgency_level || 'medium',
+        location_address: initialData.location_address || user?.location_address || '',
+        location_lat: initialData.location_lat || user?.location_lat || 36.1447,
+        location_lng: initialData.location_lng || user?.location_lng || -86.8027,
+        target_gender: initialData.target_gender || '',
+      });
+      setItems(
+        (initialData.items || []).map((item) => ({
+          resource_type: item.resource_type,
+          quantity: item.quantity_needed || item.quantity || 1,
+          notes: item.notes || '',
+        }))
+      );
+    } else {
+      setFormData(defaultFormData);
+      setItems([createEmptyItem()]);
+    }
+
+    setError('');
+  }, [isOpen, initialData, user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -54,7 +75,7 @@ const CreateRequestModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   const addItem = () => {
-    setItems([...items, { resource_type: 'food', quantity: 1, notes: '' }]);
+    setItems([...items, createEmptyItem()]);
   };
 
   const removeItem = (index) => {
@@ -71,27 +92,25 @@ const CreateRequestModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const requestData = {
         ...formData,
+        target_gender: formData.target_gender || null,
         items: items.map(item => ({
           ...item,
           quantity: parseInt(item.quantity) || 1,
         })),
       };
 
-      await requestsAPI.create(requestData);
+      if (mode === 'edit' && initialData?.request_id) {
+        await requestsAPI.update(initialData.request_id, requestData);
+      } else {
+        await requestsAPI.create(requestData);
+      }
 
       onSuccess();
       onClose();
 
       // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        urgency_level: 'medium',
-        location_address: user?.location_address || '',
-        location_lat: user?.location_lat || 36.1447,
-        location_lng: user?.location_lng || -86.8027,
-      });
-      setItems([{ resource_type: 'food', quantity: 1, notes: '' }]);
+      setFormData(defaultFormData);
+      setItems([createEmptyItem()]);
     } catch (err) {
       // Extract error message from different possible error formats
       const errorMessage = err?.response?.data?.error || err?.message || 'Failed to create request';
@@ -109,7 +128,9 @@ const CreateRequestModal = ({ isOpen, onClose, onSuccess }) => {
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Create New Request</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              {mode === 'edit' ? 'Edit Request' : 'Create New Request'}
+            </h2>
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700"
@@ -179,6 +200,24 @@ const CreateRequestModal = ({ isOpen, onClose, onSuccess }) => {
                 {formData.urgency_level === 'medium' && '📋 Medium: Needed within a day or two'}
                 {formData.urgency_level === 'low' && '📅 Low: Not urgent'}
               </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Audience (optional)
+              </label>
+              <select
+                name="target_gender"
+                value={formData.target_gender}
+                onChange={handleChange}
+                className="input-field"
+              >
+                {TARGET_GENDER_OPTIONS.map((option) => (
+                  <option key={option.value || 'everyone'} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -257,7 +296,7 @@ const CreateRequestModal = ({ isOpen, onClose, onSuccess }) => {
                 disabled={loading}
                 className="btn-primary flex-1"
               >
-                {loading ? 'Creating...' : 'Create Request'}
+                {loading ? (mode === 'edit' ? 'Saving...' : 'Creating...') : (mode === 'edit' ? 'Save Request' : 'Create Request')}
               </button>
               <button
                 type="button"

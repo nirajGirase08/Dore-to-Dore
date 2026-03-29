@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
-    gender VARCHAR(20),
+    gender VARCHAR(20) DEFAULT 'prefer_not_to_answer',
     location_lat DECIMAL(10, 8),
     location_lng DECIMAL(11, 8),
     location_address TEXT,
@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS requests (
     location_lat DECIMAL(10, 8) NOT NULL,
     location_lng DECIMAL(11, 8) NOT NULL,
     location_address TEXT,
+    target_gender VARCHAR(20),
     status VARCHAR(50) DEFAULT 'active', -- active, partially_fulfilled, fulfilled, cancelled
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
@@ -47,6 +48,7 @@ CREATE INDEX idx_requests_user ON requests(user_id);
 CREATE INDEX idx_requests_status ON requests(status);
 CREATE INDEX idx_requests_location ON requests(location_lat, location_lng);
 CREATE INDEX idx_requests_urgency ON requests(urgency_level);
+CREATE INDEX idx_requests_target_gender ON requests(target_gender);
 
 -- Request Items Table
 CREATE TABLE IF NOT EXISTS request_items (
@@ -71,6 +73,7 @@ CREATE TABLE IF NOT EXISTS offers (
     location_lat DECIMAL(10, 8) NOT NULL,
     location_lng DECIMAL(11, 8) NOT NULL,
     location_address TEXT,
+    target_gender VARCHAR(20),
     delivery_available BOOLEAN DEFAULT false,
     status VARCHAR(50) DEFAULT 'active', -- active, partially_claimed, fulfilled, cancelled
     available_from TIMESTAMP,
@@ -82,6 +85,7 @@ CREATE TABLE IF NOT EXISTS offers (
 CREATE INDEX idx_offers_user ON offers(user_id);
 CREATE INDEX idx_offers_status ON offers(status);
 CREATE INDEX idx_offers_location ON offers(location_lat, location_lng);
+CREATE INDEX idx_offers_target_gender ON offers(target_gender);
 
 -- Offer Items Table
 CREATE TABLE IF NOT EXISTS offer_items (
@@ -91,11 +95,47 @@ CREATE TABLE IF NOT EXISTS offer_items (
     quantity_total INT NOT NULL,
     quantity_remaining INT NOT NULL,
     status VARCHAR(50) DEFAULT 'available', -- available, claimed, given
-    notes TEXT
+    notes TEXT,
+    image_url TEXT
 );
 
 CREATE INDEX idx_offer_items_offer ON offer_items(offer_id);
 CREATE INDEX idx_offer_items_type ON offer_items(resource_type);
+
+CREATE TABLE IF NOT EXISTS assistance_transactions (
+    transaction_id SERIAL PRIMARY KEY,
+    conversation_id INT,
+    request_id INT,
+    request_item_id INT,
+    offer_id INT,
+    offer_item_id INT,
+    helper_user_id INT NOT NULL REFERENCES users(user_id),
+    recipient_user_id INT NOT NULL REFERENCES users(user_id),
+    resource_type VARCHAR(100) NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    completion_source VARCHAR(20) NOT NULL DEFAULT 'manual',
+    completed_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_assistance_transactions_helper ON assistance_transactions(helper_user_id);
+CREATE INDEX idx_assistance_transactions_recipient ON assistance_transactions(recipient_user_id);
+CREATE INDEX idx_assistance_transactions_conversation ON assistance_transactions(conversation_id);
+CREATE INDEX idx_assistance_transactions_request ON assistance_transactions(request_id);
+CREATE INDEX idx_assistance_transactions_offer ON assistance_transactions(offer_id);
+
+CREATE TABLE IF NOT EXISTS assistance_feedback (
+    feedback_id SERIAL PRIMARY KEY,
+    transaction_id INT NOT NULL UNIQUE REFERENCES assistance_transactions(transaction_id) ON DELETE CASCADE,
+    reviewer_user_id INT NOT NULL REFERENCES users(user_id),
+    reviewee_user_id INT NOT NULL REFERENCES users(user_id),
+    was_helpful BOOLEAN NOT NULL,
+    note TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_assistance_feedback_reviewer ON assistance_feedback(reviewer_user_id);
+CREATE INDEX idx_assistance_feedback_reviewee ON assistance_feedback(reviewee_user_id);
 
 -- Conversations Table
 CREATE TABLE IF NOT EXISTS conversations (
@@ -104,12 +144,17 @@ CREATE TABLE IF NOT EXISTS conversations (
     offer_id INT REFERENCES offers(offer_id),
     participant_1_id INT REFERENCES users(user_id),
     participant_2_id INT REFERENCES users(user_id),
+    user1_id INT REFERENCES users(user_id),
+    user2_id INT REFERENCES users(user_id),
     status VARCHAR(50) DEFAULT 'active', -- active, resolved, archived
     created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
     last_message_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE INDEX idx_conversations_participants ON conversations(participant_1_id, participant_2_id);
+CREATE INDEX idx_conversations_user1 ON conversations(user1_id);
+CREATE INDEX idx_conversations_user2 ON conversations(user2_id);
 CREATE INDEX idx_conversations_request ON conversations(request_id);
 CREATE INDEX idx_conversations_offer ON conversations(offer_id);
 
@@ -121,12 +166,51 @@ CREATE TABLE IF NOT EXISTS messages (
     recipient_id INT REFERENCES users(user_id),
     message_text TEXT NOT NULL,
     is_read BOOLEAN DEFAULT false,
-    sent_at TIMESTAMP DEFAULT NOW()
+    sent_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE INDEX idx_messages_conversation ON messages(conversation_id);
 CREATE INDEX idx_messages_sender ON messages(sender_id);
 CREATE INDEX idx_messages_recipient ON messages(recipient_id);
+CREATE INDEX idx_messages_created ON messages(created_at);
+
+-- Messaging compatibility triggers
+CREATE OR REPLACE FUNCTION sync_conversations_compatibility()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.participant_1_id := COALESCE(NEW.participant_1_id, NEW.user1_id);
+    NEW.participant_2_id := COALESCE(NEW.participant_2_id, NEW.user2_id);
+    NEW.user1_id := COALESCE(NEW.user1_id, NEW.participant_1_id);
+    NEW.user2_id := COALESCE(NEW.user2_id, NEW.participant_2_id);
+    NEW.status := COALESCE(NEW.status, 'active');
+    NEW.created_at := COALESCE(NEW.created_at, NOW());
+    NEW.updated_at := COALESCE(NEW.updated_at, NOW());
+    NEW.last_message_at := COALESCE(NEW.last_message_at, NEW.created_at, NOW());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_sync_conversations_compatibility ON conversations;
+CREATE TRIGGER trg_sync_conversations_compatibility
+BEFORE INSERT OR UPDATE ON conversations
+FOR EACH ROW
+EXECUTE FUNCTION sync_conversations_compatibility();
+
+CREATE OR REPLACE FUNCTION sync_messages_compatibility()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.sent_at := COALESCE(NEW.sent_at, NEW.created_at, NOW());
+    NEW.created_at := COALESCE(NEW.created_at, NEW.sent_at, NOW());
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_sync_messages_compatibility ON messages;
+CREATE TRIGGER trg_sync_messages_compatibility
+BEFORE INSERT OR UPDATE ON messages
+FOR EACH ROW
+EXECUTE FUNCTION sync_messages_compatibility();
 
 -- Transactions Table
 CREATE TABLE IF NOT EXISTS transactions (

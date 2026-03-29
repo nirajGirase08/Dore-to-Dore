@@ -38,6 +38,10 @@ const OfferItem = sequelize.define('OfferItem', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  image_url: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
 }, {
   tableName: 'offer_items',
   timestamps: false,

@@ -10,6 +10,7 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [quickNavOpen, setQuickNavOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { bellNotifications, unreadCount, markRead, markAllRead } = useNotifications();
 
   const handleLogout = async () => {
@@ -110,7 +111,7 @@ const Navbar = () => {
                         />
                       </svg>
                       <div>
-                        <p className="text-sm font-medium text-gray-800">Volunteer</p>
+                        <p className="text-sm font-medium text-gray-800">I Can Help</p>
                         <p className="text-xs text-gray-500">Offer help & resources</p>
                       </div>
                     </Link>
@@ -176,7 +177,7 @@ const Navbar = () => {
 
             {/* Logo/Brand */}
             <Link to="/dashboard" className="flex items-center space-x-2">
-              <div className="text-xl md:text-2xl font-bold">Crisis Connect</div>
+              <div className="text-xl md:text-2xl font-bold">Dore-to-Dore</div>
             </Link>
           </div>
 
@@ -192,7 +193,7 @@ const Navbar = () => {
               to="/volunteer"
               className="hover:text-primary-200 transition-colors"
             >
-              Volunteer
+              I Can Help
             </Link>
             <Link
               to="/need-help"
@@ -289,13 +290,83 @@ const Navbar = () => {
 
             {/* User menu */}
             <div className="flex items-center space-x-4 border-l border-primary-500 pl-6">
-              <span className="text-sm">{user?.name}</span>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-primary-700 hover:bg-primary-800 rounded-lg transition-colors"
-              >
-                Logout
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-primary-700"
+                >
+                  {user?.profile_image_url ? (
+                    <img
+                      src={user.profile_image_url}
+                      alt={`${user?.name || 'User'} avatar`}
+                      className="h-8 w-8 rounded-full object-cover ring-2 ring-primary-300"
+                    />
+                  ) : (
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-800 text-xs font-bold text-white">
+                      {(user?.name || 'U').charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span>{user?.name}</span>
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {userMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
+                    <div className="absolute right-0 top-full z-20 mt-2 w-60 overflow-hidden rounded-lg bg-white shadow-xl">
+                      <div className="border-b border-gray-100 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          {user?.profile_image_url ? (
+                            <img
+                              src={user.profile_image_url}
+                              alt={`${user?.name || 'User'} avatar`}
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700">
+                              {(user?.name || 'U').charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
+                            <p className="truncate text-xs text-gray-500">{user?.email}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Link
+                        to="/profile"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="block px-4 py-3 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                      >
+                        Profile
+                      </Link>
+
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="block w-full px-4 py-3 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -344,7 +415,7 @@ const Navbar = () => {
               className="block hover:text-primary-200 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Volunteer
+              I Can Help
             </Link>
             <Link
               to="/need-help"
@@ -365,7 +436,13 @@ const Navbar = () => {
             </Link>
 
             <div className="pt-3 border-t border-primary-500">
-              <div className="text-sm mb-2">{user?.name}</div>
+              <Link
+                to="/profile"
+                className="mb-3 block text-sm hover:text-primary-200 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {user?.name}
+              </Link>
               <button
                 onClick={() => {
                   handleLogout();

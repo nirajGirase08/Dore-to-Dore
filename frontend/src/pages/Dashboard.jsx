@@ -1,22 +1,93 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { conversationsAPI, trustAPI } from '../services/api';
+import PendingFeedbackSection from '../components/shared/PendingFeedbackSection';
+import TrustSummary from '../components/shared/TrustSummary';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [trustSummary, setTrustSummary] = useState(null);
+  const [pendingFeedback, setPendingFeedback] = useState([]);
+
+  const loadTrust = async () => {
+    try {
+      const response = await trustAPI.getMySummary();
+      setTrustSummary(response.data?.summary || null);
+      setPendingFeedback(response.data?.pending_feedback || []);
+    } catch (error) {
+      console.error('Failed to fetch trust summary:', error);
+    }
+  };
+
+  useEffect(() => {
+    const loadUnreadCount = async () => {
+      try {
+        const response = await conversationsAPI.getUnreadCount();
+        setUnreadCount(response.data?.unread_count || 0);
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error);
+      }
+    };
+
+    loadUnreadCount();
+    loadTrust();
+    const intervalId = window.setInterval(loadUnreadCount, 5000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   return (
     <div className="container-custom py-8">
+      {pendingFeedback.length > 0 && (
+        <div className="mb-8">
+          <PendingFeedbackSection
+            pendingFeedback={pendingFeedback}
+            onFeedbackSubmitted={loadTrust}
+          />
+        </div>
+      )}
+
       {/* Welcome Section */}
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold text-gray-800 mb-4">
-          Welcome to Crisis Connect, {user?.name}!
+          Welcome to Dore-to-Dore, {user?.name}!
         </h1>
         <p className="text-lg text-gray-600 mb-6">
           How would you like to help the Vanderbilt community today?
         </p>
+
+        <div className="mb-6 flex justify-center">
+          <button
+            onClick={() => navigate('/messages')}
+            className="relative flex items-center gap-3 rounded-xl bg-white px-6 py-3 text-gray-800 shadow-md transition-shadow hover:shadow-lg"
+          >
+            <svg
+              className="h-6 w-6 text-purple-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+            <span className="font-semibold">Messages</span>
+            {unreadCount > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </button>
+        </div>
 
         {/* Report Blockage CTA */}
         <div className="inline-flex flex-col items-center gap-2">
@@ -32,7 +103,7 @@ const Dashboard = () => {
 
       {/* Main Action Buttons */}
       <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-        {/* Volunteer Button */}
+        {/* I Can Help Button */}
         <button
           onClick={() => navigate('/volunteer')}
           className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500 to-green-600 p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
@@ -53,7 +124,7 @@ const Dashboard = () => {
                 />
               </svg>
             </div>
-            <h2 className="text-3xl font-bold mb-3">Volunteer</h2>
+            <h2 className="text-3xl font-bold mb-3">I Can Help</h2>
             <p className="text-green-100 text-lg">
               Offer resources, help, or services to those in need
             </p>
@@ -89,6 +160,10 @@ const Dashboard = () => {
           </div>
           <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-500 transform scale-0 group-hover:scale-100 transition-transform duration-300"></div>
         </button>
+      </div>
+
+      <div className="max-w-4xl mx-auto mb-12">
+        <TrustSummary summary={trustSummary} title="Your Impact" />
       </div>
 
       {/* Info Section for Developer 2 */}

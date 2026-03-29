@@ -12,6 +12,7 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     phone: '',
+    gender: 'prefer_not_to_answer',
     user_type: 'student',
     location_address: '',
   });
@@ -72,7 +73,7 @@ const Register = () => {
           {/* Logo/Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h1>
-            <p className="text-gray-600">Join the Vanderbilt Crisis Connect community</p>
+            <p className="text-gray-600">Join the Vanderbilt Dore-to-Dore community</p>
           </div>
 
           {/* Error message */}
@@ -161,6 +162,23 @@ const Register = () => {
                 className="input-field"
                 placeholder="(615) 555-1234"
               />
+            </div>
+
+            <div>
+              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+                Gender
+              </label>
+              <select
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className="input-field"
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="prefer_not_to_answer">Prefer not to answer</option>
+              </select>
             </div>
 
             <div>

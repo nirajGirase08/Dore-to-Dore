@@ -1,10 +1,20 @@
 import express from 'express';
-import { authenticate } from '../middleware/authMiddleware.js';
+import { Op } from 'sequelize';
+import { authenticate, optionalAuth } from '../middleware/authMiddleware.js';
 import Request from '../models/Request.js';
 import RequestItem from '../models/RequestItem.js';
 import User from '../models/User.js';
+import Conversation from '../models/Conversation.js';
+import AssistanceTransaction from '../models/AssistanceTransaction.js';
 
 const router = express.Router();
+const getTargetGenderFilter = (gender) => {
+  if (gender === 'male' || gender === 'female') {
+    return [{ target_gender: null }, { target_gender: gender }];
+  }
+
+  return [{ target_gender: null }];
+};
 
 const recalculateRequestStatus = async (requestId, currentStatus = null) => {
   const items = await RequestItem.findAll({
@@ -12,7 +22,7 @@ const recalculateRequestStatus = async (requestId, currentStatus = null) => {
   });
 
   if (!items.length) {
-    return currentStatus || 'active';
+    return 'fulfilled';
   }
 
   const completedCount = items.filter((item) => item.status === 'fulfilled').length;
@@ -22,6 +32,22 @@ const recalculateRequestStatus = async (requestId, currentStatus = null) => {
   }
 
   return 'fulfilled';
+};
+
+const replaceRequestItems = async (requestId, items) => {
+  await RequestItem.destroy({ where: { request_id: requestId } });
+
+  return Promise.all(
+    items.map((item) =>
+      RequestItem.create({
+        request_id: requestId,
+        resource_type: item.resource_type,
+        quantity_needed: item.quantity,
+        notes: item.notes,
+        status: 'pending',
+      })
+    )
+  );
 };
 
 /**
@@ -38,6 +64,7 @@ router.post('/', authenticate, async (req, res) => {
       location_lat,
       location_lng,
       location_address,
+      target_gender,
       items,
     } = req.body;
 
@@ -58,6 +85,7 @@ router.post('/', authenticate, async (req, res) => {
       location_lat,
       location_lng,
       location_address,
+      target_gender: target_gender || null,
       status: 'active',
     });
 
@@ -96,7 +124,7 @@ router.post('/', authenticate, async (req, res) => {
  * @desc    Get all active requests
  * @access  Public
  */
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const { status = 'active', urgency } = req.query;
 
@@ -104,6 +132,7 @@ router.get('/', async (req, res) => {
     if (urgency) {
       where.urgency_level = urgency;
     }
+    where[Op.or] = getTargetGenderFilter(req.user?.gender);
 
     const requests = await Request.findAll({
       where,
@@ -115,13 +144,10 @@ router.get('/', async (req, res) => {
         {
           model: User,
           as: 'user',
-          attributes: ['user_id', 'name', 'email', 'phone', 'reputation_score'],
+          attributes: ['user_id', 'name', 'email', 'phone', 'gender', 'location_lat', 'location_lng', 'location_address', 'profile_image_url', 'reputation_score'],
         },
       ],
-      order: [
-        ['urgency_level', 'ASC'], // critical first
-        ['created_at', 'DESC'],
-      ],
+      order: [['created_at', 'DESC']],
     });
 
     res.json({
@@ -184,7 +210,7 @@ router.get('/:id', async (req, res) => {
         {
           model: User,
           as: 'user',
-          attributes: ['user_id', 'name', 'email', 'phone', 'location_address', 'reputation_score'],
+          attributes: ['user_id', 'name', 'email', 'phone', 'gender', 'location_lat', 'location_lng', 'location_address', 'profile_image_url', 'reputation_score'],
         },
       ],
     });
@@ -233,19 +259,60 @@ router.put('/:id', authenticate, async (req, res) => {
       });
     }
 
-    const { title, description, status, urgency_level } = req.body;
+    const {
+      title,
+      description,
+      status,
+      urgency_level,
+      target_gender,
+      location_address,
+      location_lat,
+      location_lng,
+      items,
+    } = req.body;
+
+    if (items && (!Array.isArray(items) || items.length === 0)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Requests must include at least one item.',
+      });
+    }
 
     await request.update({
       title: title || request.title,
       description: description !== undefined ? description : request.description,
       status: status || request.status,
       urgency_level: urgency_level || request.urgency_level,
+      target_gender: target_gender !== undefined ? (target_gender || null) : request.target_gender,
+      location_address: location_address || request.location_address,
+      location_lat: location_lat || request.location_lat,
+      location_lng: location_lng || request.location_lng,
       updated_at: new Date(),
+    });
+
+    if (items) {
+      await replaceRequestItems(request.request_id, items);
+      const nextStatus = await recalculateRequestStatus(request.request_id, request.status);
+      await request.update({ status: nextStatus });
+    }
+
+    const updatedRequest = await Request.findByPk(request.request_id, {
+      include: [
+        {
+          model: RequestItem,
+          as: 'items',
+        },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['user_id', 'name', 'email', 'phone', 'gender', 'location_lat', 'location_lng', 'location_address', 'profile_image_url', 'reputation_score'],
+        },
+      ],
     });
 
     res.json({
       success: true,
-      data: request,
+      data: updatedRequest,
       message: 'Request updated successfully.',
     });
   } catch (error) {
@@ -316,6 +383,7 @@ router.patch('/:id/status', authenticate, async (req, res) => {
  */
 router.patch('/:id/items/:itemId/fulfill', authenticate, async (req, res) => {
   try {
+    const { conversation_id } = req.body;
     const request = await Request.findByPk(req.params.id);
 
     if (!request) {
@@ -346,10 +414,61 @@ router.patch('/:id/items/:itemId/fulfill', authenticate, async (req, res) => {
       });
     }
 
-    await item.update({
-      quantity_fulfilled: item.quantity_needed,
-      status: 'fulfilled',
+    if (!conversation_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'conversation_id is required to record who fulfilled this request.',
+      });
+    }
+
+    const conversation = await Conversation.findOne({
+      where: {
+        conversation_id,
+        [Op.or]: [
+          { participant_1_id: req.userId },
+          { participant_2_id: req.userId },
+        ],
+      },
     });
+
+    if (!conversation) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please choose a valid conversation for this fulfillment.',
+      });
+    }
+
+    if (conversation.request_id && conversation.request_id !== request.request_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'This conversation is already linked to a different request.',
+      });
+    }
+
+    if (!conversation.request_id) {
+      await conversation.update({
+        request_id: request.request_id,
+      });
+    }
+
+    const helperUserId = conversation.participant_1_id === req.userId
+      ? conversation.participant_2_id
+      : conversation.participant_1_id;
+
+    await AssistanceTransaction.create({
+      conversation_id: conversation.conversation_id,
+      request_id: request.request_id,
+      request_item_id: item.item_id,
+      offer_id: conversation.offer_id || null,
+      helper_user_id: helperUserId,
+      recipient_user_id: req.userId,
+      resource_type: item.resource_type,
+      quantity: 1,
+      completion_source: 'manual',
+      completed_at: new Date(),
+    });
+
+    await item.destroy();
 
     const nextStatus = await recalculateRequestStatus(request.request_id, request.status);
 
@@ -370,7 +489,7 @@ router.patch('/:id/items/:itemId/fulfill', authenticate, async (req, res) => {
     res.json({
       success: true,
       data: updatedRequest,
-      message: 'Request item marked fulfilled.',
+      message: 'Request item fulfilled and removed.',
     });
   } catch (error) {
     console.error('Fulfill request item error:', error);

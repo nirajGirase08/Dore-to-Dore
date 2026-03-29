@@ -77,7 +77,35 @@ export const authAPI = {
     const response = await api.get('/auth/me');
     return response.data;
   },
+
+  updateProfile: async (profileData) => {
+    const response = await api.put('/auth/profile', profileData);
+    return response.data;
+  },
 };
+
+const fileToBase64Payload = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    const result = reader.result;
+    const base64Data = typeof result === 'string' ? result.split(',')[1] : null;
+
+    if (!base64Data) {
+      reject(new Error('Failed to read image file.'));
+      return;
+    }
+
+    resolve({
+      base64Data,
+      mimeType: file.type,
+      fileName: file.name,
+    });
+  };
+
+  reader.onerror = () => reject(new Error('Failed to read image file.'));
+  reader.readAsDataURL(file);
+});
 
 // ============================================
 // Requests API (Developer 1)
@@ -114,8 +142,8 @@ export const requestsAPI = {
     return response.data;
   },
 
-  fulfillItem: async (requestId, itemId) => {
-    const response = await api.patch(`/requests/${requestId}/items/${itemId}/fulfill`);
+  fulfillItem: async (requestId, itemId, payload = {}) => {
+    const response = await api.patch(`/requests/${requestId}/items/${itemId}/fulfill`, payload);
     return response.data;
   },
 
@@ -160,8 +188,8 @@ export const offersAPI = {
     return response.data;
   },
 
-  fulfillItem: async (offerId, itemId) => {
-    const response = await api.patch(`/offers/${offerId}/items/${itemId}/fulfill`);
+  fulfillItem: async (offerId, itemId, payload = {}) => {
+    const response = await api.patch(`/offers/${offerId}/items/${itemId}/fulfill`, payload);
     return response.data;
   },
 
@@ -218,6 +246,22 @@ export const conversationsAPI = {
     const response = await api.get('/conversations/unread-count');
     return response.data;
   },
+
+  getRelatedOptions: async ({ requestId = null, offerId = null }) => {
+    const response = await api.get('/conversations/related/options', {
+      params: {
+        request_id: requestId || undefined,
+        offer_id: offerId || undefined,
+      },
+    });
+    return response.data;
+  },
+
+  // Get the latest unread incoming message for current user
+  getLatestUnread: async () => {
+    const response = await api.get('/conversations/unread-latest');
+    return response.data;
+  },
 };
 
 export const messagesAPI = {
@@ -227,6 +271,37 @@ export const messagesAPI = {
       conversation_id: conversationId,
       message_text: messageText
     });
+    return response.data;
+  },
+};
+
+export const uploadsAPI = {
+  uploadProfileImage: async (file) => {
+    const payload = await fileToBase64Payload(file);
+    const response = await api.post('/uploads/profile-image', payload);
+    return response.data;
+  },
+
+  uploadOfferItemImage: async (file) => {
+    const payload = await fileToBase64Payload(file);
+    const response = await api.post('/uploads/offer-item-image', payload);
+    return response.data;
+  },
+};
+
+export const trustAPI = {
+  getMySummary: async () => {
+    const response = await api.get('/trust/me');
+    return response.data;
+  },
+
+  getUserSummary: async (userId) => {
+    const response = await api.get(`/trust/users/${userId}`);
+    return response.data;
+  },
+
+  submitFeedback: async (transactionId, payload) => {
+    const response = await api.post(`/trust/feedback/${transactionId}`, payload);
     return response.data;
   },
 };

@@ -57,3 +57,11 @@ coverage/
 # Misc
 .eslintcache
 .parcel-cache
+
+# Local uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+!backend/uploads/profiles/
+!backend/uploads/profiles/.gitkeep
+!backend/uploads/offers/
+!backend/uploads/offers/.gitkeep

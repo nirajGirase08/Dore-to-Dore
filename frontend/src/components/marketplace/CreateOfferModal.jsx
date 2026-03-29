@@ -1,37 +1,68 @@
-import React, { useState } from 'react';
-import { offersAPI } from '../../services/api';
+import React, { useEffect, useState } from 'react';
+import { offersAPI, uploadsAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { RESOURCE_TYPES, TARGET_GENDER_OPTIONS } from '../../constants/marketplace';
 
-const RESOURCE_TYPES = [
-  { value: 'food', label: 'Food' },
-  { value: 'water', label: 'Water' },
-  { value: 'shelter', label: 'Shelter' },
-  { value: 'blankets', label: 'Blankets' },
-  { value: 'clothes', label: 'Clothes' },
-  { value: 'medical', label: 'Medical Supplies' },
-  { value: 'transport', label: 'Transportation' },
-  { value: 'power', label: 'Power/Charging' },
-  { value: 'other', label: 'Other' },
-];
+const createEmptyItem = () => ({
+  resource_type: 'food',
+  quantity: 1,
+  notes: '',
+  imageFile: null,
+  imagePreviewUrl: '',
+});
 
-const CreateOfferModal = ({ isOpen, onClose, onSuccess }) => {
+const CreateOfferModal = ({ isOpen, onClose, onSuccess, initialData = null, mode = 'create' }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const [formData, setFormData] = useState({
+  const defaultFormData = {
     title: '',
     description: '',
     location_address: user?.location_address || '',
     location_lat: user?.location_lat || 36.1447,
     location_lng: user?.location_lng || -86.8027,
+    target_gender: '',
     delivery_available: false,
     available_until: '',
-  });
+  };
 
-  const [items, setItems] = useState([
-    { resource_type: 'food', quantity: 1, notes: '' },
-  ]);
+  const [formData, setFormData] = useState(defaultFormData);
+  const [items, setItems] = useState([createEmptyItem()]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    if (initialData) {
+      setFormData({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        location_address: initialData.location_address || user?.location_address || '',
+        location_lat: initialData.location_lat || user?.location_lat || 36.1447,
+        location_lng: initialData.location_lng || user?.location_lng || -86.8027,
+        target_gender: initialData.target_gender || '',
+        delivery_available: !!initialData.delivery_available,
+        available_until: initialData.available_until ? initialData.available_until.slice(0, 16) : '',
+      });
+      setItems(
+        (initialData.items || []).map((item) => ({
+          resource_type: item.resource_type,
+          quantity: item.quantity_total || item.quantity || 1,
+          notes: item.notes || '',
+          imageFile: null,
+          imagePreviewUrl: item.image_url || '',
+          existingImageUrl: item.image_url || '',
+        }))
+      );
+    } else {
+      setFormData(defaultFormData);
+      setItems([createEmptyItem()]);
+    }
+
+    setError('');
+  }, [isOpen, initialData, user]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -48,7 +79,7 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess }) => {
   };
 
   const addItem = () => {
-    setItems([...items, { resource_type: 'food', quantity: 1, notes: '' }]);
+    setItems([...items, createEmptyItem()]);
   };
 
   const removeItem = (index) => {
@@ -63,33 +94,47 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess }) => {
     setLoading(true);
 
     try {
+      const uploadedItems = await Promise.all(
+        items.map(async (item) => {
+          let imageUrl = null;
+
+          if (item.imageFile) {
+            const uploadResponse = await uploadsAPI.uploadOfferItemImage(item.imageFile);
+            imageUrl = uploadResponse.data?.image_url || null;
+          } else if (item.existingImageUrl) {
+            imageUrl = item.existingImageUrl;
+          }
+
+          return {
+            resource_type: item.resource_type,
+            quantity: parseInt(item.quantity, 10) || 1,
+            notes: item.notes,
+            image_url: imageUrl,
+          };
+        })
+      );
+
       // Prepare data with proper null handling for optional fields
       const offerData = {
         ...formData,
         // Convert empty string to null for available_until
         available_until: formData.available_until || null,
-        items: items.map(item => ({
-          ...item,
-          quantity: parseInt(item.quantity) || 1,
-        })),
+        target_gender: formData.target_gender || null,
+        items: uploadedItems,
       };
 
-      await offersAPI.create(offerData);
+      if (mode === 'edit' && initialData?.offer_id) {
+        await offersAPI.update(initialData.offer_id, offerData);
+      } else {
+        await offersAPI.create(offerData);
+      }
 
       onSuccess();
       onClose();
 
       // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        location_address: user?.location_address || '',
-        location_lat: user?.location_lat || 36.1447,
-        location_lng: user?.location_lng || -86.8027,
-        delivery_available: false,
-        available_until: '',
-      });
-      setItems([{ resource_type: 'food', quantity: 1, notes: '' }]);
+      setFormData(defaultFormData);
+      setItems([createEmptyItem()]);
     } catch (err) {
       // Extract error message from different possible error formats
       const errorMessage = err?.response?.data?.error || err?.message || 'Failed to create offer';
@@ -100,6 +145,21 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess }) => {
     }
   };
 
+  const handleItemImageChange = (index, file) => {
+    if (!file) {
+      return;
+    }
+
+    const newItems = [...items];
+    newItems[index] = {
+      ...newItems[index],
+      imageFile: file,
+      imagePreviewUrl: URL.createObjectURL(file),
+      existingImageUrl: null,
+    };
+    setItems(newItems);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -107,7 +167,9 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess }) => {
       <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">Create New Offer</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              {mode === 'edit' ? 'Edit Offer' : 'Create New Offer'}
+            </h2>
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700"
@@ -184,6 +246,24 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Audience (optional)
+              </label>
+              <select
+                name="target_gender"
+                value={formData.target_gender}
+                onChange={handleChange}
+                className="input-field"
+              >
+                {TARGET_GENDER_OPTIONS.map((option) => (
+                  <option key={option.value || 'everyone'} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Available Until (optional)
               </label>
               <input
@@ -210,42 +290,61 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess }) => {
               </div>
 
               {items.map((item, index) => (
-                <div key={index} className="flex gap-2 mb-2">
-                  <select
-                    value={item.resource_type}
-                    onChange={(e) => handleItemChange(index, 'resource_type', e.target.value)}
-                    className="input-field flex-1"
-                  >
-                    {RESOURCE_TYPES.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    value={item.quantity}
-                    onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                    min="1"
-                    className="input-field w-24"
-                    placeholder="Qty"
-                  />
+                <div key={index} className="mb-3 rounded-xl border border-gray-200 p-3">
+                  <div className="flex gap-2">
+                    <select
+                      value={item.resource_type}
+                      onChange={(e) => handleItemChange(index, 'resource_type', e.target.value)}
+                      className="input-field flex-1"
+                    >
+                      {RESOURCE_TYPES.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      value={item.quantity}
+                      onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                      min="1"
+                      className="input-field w-24"
+                      placeholder="Qty"
+                    />
+                    {items.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeItem(index)}
+                        className="px-3 text-red-600 hover:text-red-700"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
                   <input
                     type="text"
                     value={item.notes}
                     onChange={(e) => handleItemChange(index, 'notes', e.target.value)}
-                    className="input-field flex-1"
+                    className="input-field mt-2"
                     placeholder="Notes (optional)"
                   />
-                  {items.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeItem(index)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      ✕
-                    </button>
-                  )}
+
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={(e) => handleItemImageChange(index, e.target.files?.[0])}
+                      className="block w-full text-sm text-gray-600 file:mr-4 file:rounded-lg file:border-0 file:bg-primary-600 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-primary-700"
+                    />
+                    {item.imagePreviewUrl && (
+                      <img
+                        src={item.imagePreviewUrl}
+                        alt={`${item.resource_type} preview`}
+                        className="h-16 w-16 rounded-lg object-cover"
+                      />
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -256,7 +355,7 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess }) => {
                 disabled={loading}
                 className="btn-primary flex-1"
               >
-                {loading ? 'Creating...' : 'Create Offer'}
+                {loading ? (mode === 'edit' ? 'Saving...' : 'Creating...') : (mode === 'edit' ? 'Save Offer' : 'Create Offer')}
               </button>
               <button
                 type="button"

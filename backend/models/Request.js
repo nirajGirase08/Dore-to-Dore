@@ -42,6 +42,13 @@ const Request = sequelize.define('Request', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  target_gender: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+    validate: {
+      isIn: [['male', 'female']],
+    },
+  },
   status: {
     type: DataTypes.STRING(50),
     defaultValue: 'active',

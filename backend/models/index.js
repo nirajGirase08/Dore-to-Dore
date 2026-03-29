@@ -6,6 +6,8 @@ import Request from './Request.js';
 import RequestItem from './RequestItem.js';
 import Conversation from './Conversation.js';
 import Message from './Message.js';
+import AssistanceTransaction from './AssistanceTransaction.js';
+import AssistanceFeedback from './AssistanceFeedback.js';
 
 // User - Offer associations
 User.hasMany(Offer, { foreignKey: 'user_id', as: 'offers' });
@@ -34,4 +36,15 @@ Message.belongsTo(Conversation, { foreignKey: 'conversation_id', as: 'conversati
 // Message - User associations
 Message.belongsTo(User, { foreignKey: 'sender_id', as: 'sender' });
 
-export { User, Offer, OfferItem, Request, RequestItem, Conversation, Message };
+// AssistanceTransaction associations
+AssistanceTransaction.belongsTo(User, { foreignKey: 'helper_user_id', as: 'helper' });
+AssistanceTransaction.belongsTo(User, { foreignKey: 'recipient_user_id', as: 'recipient' });
+AssistanceTransaction.belongsTo(Conversation, { foreignKey: 'conversation_id', as: 'conversation' });
+AssistanceTransaction.belongsTo(Offer, { foreignKey: 'offer_id', as: 'offer' });
+AssistanceTransaction.belongsTo(Request, { foreignKey: 'request_id', as: 'request' });
+AssistanceTransaction.hasOne(AssistanceFeedback, { foreignKey: 'transaction_id', as: 'feedback' });
+AssistanceFeedback.belongsTo(AssistanceTransaction, { foreignKey: 'transaction_id', as: 'transaction' });
+AssistanceFeedback.belongsTo(User, { foreignKey: 'reviewer_user_id', as: 'reviewer' });
+AssistanceFeedback.belongsTo(User, { foreignKey: 'reviewee_user_id', as: 'reviewee' });
+
+export { User, Offer, OfferItem, Request, RequestItem, Conversation, Message, AssistanceTransaction, AssistanceFeedback };

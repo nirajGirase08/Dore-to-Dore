@@ -30,6 +30,9 @@ const User = sequelize.define('User', {
   gender: {
     type: DataTypes.STRING(20),
     allowNull: true,
+    validate: {
+      isIn: [['male', 'female', 'prefer_not_to_answer']],
+    },
   },
   location_lat: {
     type: DataTypes.DECIMAL(10, 8),

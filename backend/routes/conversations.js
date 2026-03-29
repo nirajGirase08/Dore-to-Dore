@@ -43,6 +43,81 @@ router.get('/unread-count', authenticate, async (req, res) => {
   }
 });
 
+// Get the most recent unread message for the current user
+router.get('/unread-latest', authenticate, async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const latestUnread = await Message.findOne({
+      where: {
+        sender_id: { [Op.ne]: userId },
+        is_read: false,
+      },
+      include: [
+        {
+          model: Conversation,
+          as: 'conversation',
+          required: true,
+          where: {
+            [Op.or]: [
+              { participant_1_id: userId },
+              { participant_2_id: userId },
+            ],
+          },
+          include: [
+            {
+              model: User,
+              as: 'user1',
+              attributes: ['user_id', 'name', 'user_type'],
+            },
+            {
+              model: User,
+              as: 'user2',
+              attributes: ['user_id', 'name', 'user_type'],
+            },
+          ],
+        },
+        {
+          model: User,
+          as: 'sender',
+          attributes: ['user_id', 'name', 'user_type'],
+        },
+      ],
+      order: [['created_at', 'DESC']],
+    });
+
+    if (!latestUnread) {
+      return res.json({
+        success: true,
+        data: null,
+      });
+    }
+
+    const unreadData = latestUnread.toJSON();
+    const otherUser = unreadData.conversation.participant_1_id === userId
+      ? unreadData.conversation.user2
+      : unreadData.conversation.user1;
+
+    res.json({
+      success: true,
+      data: {
+        message_id: unreadData.message_id,
+        message_text: unreadData.message_text,
+        created_at: unreadData.created_at || unreadData.sent_at,
+        conversation_id: unreadData.conversation_id,
+        sender: unreadData.sender,
+        other_user: otherUser,
+      },
+    });
+  } catch (error) {
+    console.error('Get latest unread message error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch latest unread message',
+    });
+  }
+});
+
 // Get all conversations for current user
 router.get('/', authenticate, async (req, res) => {
   try {
@@ -71,7 +146,7 @@ router.get('/', authenticate, async (req, res) => {
           as: 'messages',
           limit: 1,
           order: [['sent_at', 'DESC']],
-          attributes: ['message_id', 'message_text', 'sender_id', 'sent_at', 'is_read'],
+          attributes: ['message_id', 'message_text', 'sender_id', 'sent_at', 'created_at', 'is_read'],
           separate: true
         }
       ],
@@ -82,7 +157,12 @@ router.get('/', authenticate, async (req, res) => {
     const transformedConversations = conversations.map(conv => {
       const convData = conv.toJSON();
       const otherUser = convData.participant_1_id === userId ? convData.user2 : convData.user1;
-      const lastMessage = convData.messages?.[0] || null;
+      const lastMessage = convData.messages?.[0]
+        ? {
+            ...convData.messages[0],
+            created_at: convData.messages[0].created_at || convData.messages[0].sent_at,
+          }
+        : null;
 
       return {
         conversation_id: convData.conversation_id,
@@ -102,6 +182,113 @@ router.get('/', authenticate, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch conversations'
+    });
+  }
+});
+
+// Get conversations related to a specific request or offer for the owner
+router.get('/related/options', authenticate, async (req, res) => {
+  try {
+    const { request_id, offer_id } = req.query;
+    const userId = req.userId;
+
+    if (!request_id && !offer_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'request_id or offer_id is required',
+      });
+    }
+
+    const baseParticipantWhere = {
+      [Op.or]: [
+        { participant_1_id: userId },
+        { participant_2_id: userId },
+      ],
+    };
+
+    const where = {};
+
+    if (request_id) {
+      where.request_id = request_id;
+    }
+
+    if (offer_id) {
+      where.offer_id = offer_id;
+    }
+
+    let conversations = await Conversation.findAll({
+      where: {
+        ...baseParticipantWhere,
+        ...where,
+      },
+      include: [
+        {
+          model: User,
+          as: 'user1',
+          attributes: ['user_id', 'name', 'email', 'phone', 'profile_image_url'],
+        },
+        {
+          model: User,
+          as: 'user2',
+          attributes: ['user_id', 'name', 'email', 'phone', 'profile_image_url'],
+        },
+      ],
+      order: [['last_message_at', 'DESC']],
+    });
+
+    // Fallback: if a conversation was started from the other side's request/offer,
+    // it may not carry the current offer_id/request_id. In that case surface the
+    // user's existing conversations so attribution can still be recorded.
+    if (conversations.length === 0) {
+      conversations = await Conversation.findAll({
+        where: baseParticipantWhere,
+        include: [
+          {
+            model: User,
+            as: 'user1',
+            attributes: ['user_id', 'name', 'email', 'phone', 'profile_image_url'],
+          },
+          {
+            model: User,
+            as: 'user2',
+            attributes: ['user_id', 'name', 'email', 'phone', 'profile_image_url'],
+          },
+        ],
+        order: [['last_message_at', 'DESC']],
+      });
+    }
+
+    const dedupedByUser = new Map();
+
+    conversations.forEach((conversation) => {
+      const conversationData = conversation.toJSON();
+      const otherUser = conversationData.participant_1_id === userId
+        ? conversationData.user2
+        : conversationData.user1;
+      const otherUserId = otherUser?.user_id;
+
+      if (!otherUserId || dedupedByUser.has(otherUserId)) {
+        return;
+      }
+
+      dedupedByUser.set(otherUserId, {
+        conversation_id: conversationData.conversation_id,
+        other_user: otherUser,
+        last_message_at: conversationData.last_message_at,
+      });
+    });
+
+    const options = Array.from(dedupedByUser.values());
+
+    res.json({
+      success: true,
+      data: options,
+    });
+  } catch (error) {
+    console.error('Get related conversation options error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch related conversations',
     });
   }
 });
@@ -167,13 +354,17 @@ router.get('/:id', authenticate, async (req, res) => {
 
     const convData = conversation.toJSON();
     const otherUser = convData.participant_1_id === userId ? convData.user2 : convData.user1;
+    const normalizedMessages = (convData.messages || []).map((message) => ({
+      ...message,
+      created_at: message.created_at || message.sent_at,
+    }));
 
     res.json({
       success: true,
       data: {
         conversation_id: convData.conversation_id,
         other_user: otherUser,
-        messages: convData.messages,
+        messages: normalizedMessages,
         created_at: convData.created_at
       }
     });
@@ -226,6 +417,8 @@ router.post('/', authenticate, async (req, res) => {
       conversation = await Conversation.create({
         participant_1_id: userId,
         participant_2_id: other_user_id,
+        offer_id: offer_id || null,
+        request_id: request_id || null,
         last_message_at: new Date()
       });
 
@@ -234,6 +427,13 @@ router.post('/', authenticate, async (req, res) => {
           { model: User, as: 'user1', attributes: ['user_id', 'name', 'email'] },
           { model: User, as: 'user2', attributes: ['user_id', 'name', 'email'] }
         ]
+      });
+    }
+
+    if (offer_id || request_id) {
+      await conversation.update({
+        offer_id: offer_id || conversation.offer_id || null,
+        request_id: request_id || conversation.request_id || null,
       });
     }
 

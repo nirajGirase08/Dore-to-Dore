@@ -50,7 +50,7 @@ const Login = () => {
         <div className="bg-white rounded-lg shadow-xl p-8">
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Crisis Connect</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Dore-to-Dore</h1>
             <p className="text-gray-600">Vanderbilt Community Resource Matching</p>
           </div>
 
