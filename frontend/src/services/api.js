@@ -287,6 +287,12 @@ export const uploadsAPI = {
     const response = await api.post('/uploads/offer-item-image', payload);
     return response.data;
   },
+
+  uploadBlockageImage: async (file) => {
+    const payload = await fileToBase64Payload(file);
+    const response = await api.post('/uploads/blockage-image', payload);
+    return response.data;
+  },
 };
 
 export const trustAPI = {
@@ -314,6 +320,41 @@ export const aiAPI = {
 
   getNewsSummary: async (payload) => {
     const response = await api.post('/ai/news-summary', payload);
+    return response.data;
+  },
+};
+
+// ============================================
+// Rides API
+// ============================================
+
+export const ridesAPI = {
+  create: async (data) => {
+    const response = await api.post('/rides', data);
+    return response.data;
+  },
+  getAvailable: async () => {
+    const response = await api.get('/rides/available');
+    return response.data;
+  },
+  getMy: async () => {
+    const response = await api.get('/rides/my');
+    return response.data;
+  },
+  getDriving: async () => {
+    const response = await api.get('/rides/driving');
+    return response.data;
+  },
+  getById: async (id) => {
+    const response = await api.get(`/rides/${id}`);
+    return response.data;
+  },
+  accept: async (id) => {
+    const response = await api.patch(`/rides/${id}/accept`);
+    return response.data;
+  },
+  updateStatus: async (id, status) => {
+    const response = await api.patch(`/rides/${id}/status`, { status });
     return response.data;
   },
 };

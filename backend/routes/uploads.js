@@ -12,11 +12,13 @@ const __dirname = path.dirname(__filename);
 const uploadsRoot = path.join(__dirname, '..', 'uploads');
 const profileUploadsDir = path.join(uploadsRoot, 'profiles');
 const offerUploadsDir = path.join(uploadsRoot, 'offers');
+const blockageUploadsDir = path.join(uploadsRoot, 'blockages');
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 fs.mkdirSync(profileUploadsDir, { recursive: true });
 fs.mkdirSync(offerUploadsDir, { recursive: true });
+fs.mkdirSync(blockageUploadsDir, { recursive: true });
 
 const getExtensionFromMimeType = (mimeType) => {
   switch (mimeType) {
@@ -144,6 +146,32 @@ router.post('/offer-item-image', authenticate, async (req, res) => {
       success: false,
       error: 'Failed to upload offer item image.',
     });
+  }
+});
+
+router.post('/blockage-image', authenticate, async (req, res) => {
+  try {
+    const { base64Data, mimeType } = req.body;
+    const decoded = decodeImagePayload({ base64Data, mimeType });
+
+    if (decoded.error) {
+      return res.status(400).json({ success: false, error: decoded.error });
+    }
+
+    const fileName = saveImageFile({
+      directory: blockageUploadsDir,
+      mimeType,
+      buffer: decoded.buffer,
+      prefix: `blockage-${req.userId}`,
+    });
+
+    const relativePath = `/uploads/blockages/${fileName}`;
+    const imageUrl = buildPublicUrl(req, relativePath);
+
+    res.json({ success: true, data: { image_url: imageUrl } });
+  } catch (error) {
+    console.error('Blockage image upload error:', error);
+    res.status(500).json({ success: false, error: 'Failed to upload blockage image.' });
   }
 });
 

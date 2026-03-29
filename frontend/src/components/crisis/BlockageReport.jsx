@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createBlockage } from '../../services/blockageService';
+import { createBlockage, uploadBlockageImage } from '../../services/blockageService';
 
 const BLOCKAGE_TYPES = [
   { value: 'accident', label: 'Accident' },
@@ -32,6 +32,9 @@ const BlockageReport = ({ onSuccess }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]           = useState(null);
   const [success, setSuccess]       = useState(null);
+  const [imageFile, setImageFile]   = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   // Address autocomplete
   const [suggestions, setSuggestions]     = useState([]);
@@ -131,6 +134,28 @@ const BlockageReport = ({ onSuccess }) => {
     setForm((f) => ({ ...f, [name]: type === 'checkbox' ? checked : value }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Only JPG, PNG, and WEBP images are allowed.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be 5 MB or smaller.');
+      return;
+    }
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setError(null);
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -143,11 +168,18 @@ const BlockageReport = ({ onSuccess }) => {
 
     setSubmitting(true);
     try {
+      let photo_url = null;
+      if (imageFile) {
+        const uploadResult = await uploadBlockageImage(imageFile);
+        photo_url = uploadResult.data?.image_url || null;
+      }
+
       const payload = {
         blockage_type:      form.blockage_type,
         severity:           form.severity,
         description:        form.description,
         notify_authorities: form.notify_authorities,
+        photo_url,
       };
       if (coords.lat) {
         payload.location_lat     = coords.lat;
@@ -182,6 +214,8 @@ const BlockageReport = ({ onSuccess }) => {
             setSuccess(null);
             setForm({ blockage_type: '', severity: '', description: '', location_address: '', notify_authorities: true });
             setCoords({ lat: null, lng: null });
+            setImageFile(null);
+            setImagePreview(null);
           }}
         >
           Report Another
@@ -319,6 +353,45 @@ const BlockageReport = ({ onSuccess }) => {
           placeholder="Describe the blockage (e.g. large oak tree blocking both lanes…)"
           className="input-field resize-none"
         />
+      </div>
+
+      {/* Photo Upload */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Photo <span className="text-gray-400 font-normal">(optional)</span>
+        </label>
+        {imagePreview ? (
+          <div className="relative inline-block">
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="rounded-lg max-h-48 max-w-full object-cover border border-gray-200"
+            />
+            <button
+              type="button"
+              onClick={handleRemoveImage}
+              className="absolute top-1 right-1 bg-white border border-gray-300 rounded-full w-6 h-6 flex items-center justify-center text-gray-600 hover:bg-red-50 hover:text-red-600 text-xs font-bold shadow"
+              title="Remove photo"
+            >
+              ✕
+            </button>
+          </div>
+        ) : (
+          <label className="flex items-center gap-3 cursor-pointer border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 hover:border-primary-400 transition-colors">
+            <span className="text-2xl">📷</span>
+            <div>
+              <p className="text-sm font-medium text-gray-700">Upload a photo</p>
+              <p className="text-xs text-gray-400">JPG, PNG, or WEBP · max 5 MB</p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleImageChange}
+              className="sr-only"
+            />
+          </label>
+        )}
       </div>
 
       {/* Notify Authorities */}

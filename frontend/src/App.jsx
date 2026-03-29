@@ -14,6 +14,8 @@ import ProfilePage from './pages/ProfilePage';
 import OfferDetailPage from './pages/OfferDetailPage';
 import RequestDetailPage from './pages/RequestDetailPage';
 import UserPostsPage from './pages/UserPostsPage';
+import AvailableRidesPage from './pages/AvailableRidesPage';
+import RideTrackingPage from './pages/RideTrackingPage';
 import Layout from './components/shared/Layout';
 
 // Protected Route wrapper
@@ -172,6 +174,28 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <UserPostsPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Rides */}
+          <Route
+            path="/rides"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AvailableRidesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/rides/:rideId"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <RideTrackingPage />
                 </Layout>
               </ProtectedRoute>
             }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { requestsAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { RESOURCE_TYPES, TARGET_GENDER_OPTIONS } from '../../constants/marketplace';
+import AddressAutocomplete from '../shared/AddressAutocomplete';
 
 const URGENCY_LEVELS = [
   { value: 'low', label: 'Low', color: 'text-gray-700' },
@@ -21,9 +22,9 @@ const CreateRequestModal = ({ isOpen, onClose, onSuccess, initialData = null, mo
     title: '',
     description: '',
     urgency_level: 'medium',
-    location_address: user?.location_address || '',
-    location_lat: user?.location_lat || 36.1447,
-    location_lng: user?.location_lng || -86.8027,
+    location_address: '',
+    location_lat: null,
+    location_lng: null,
     target_gender: '',
   };
 
@@ -40,9 +41,9 @@ const CreateRequestModal = ({ isOpen, onClose, onSuccess, initialData = null, mo
         title: initialData.title || '',
         description: initialData.description || '',
         urgency_level: initialData.urgency_level || 'medium',
-        location_address: initialData.location_address || user?.location_address || '',
-        location_lat: initialData.location_lat || user?.location_lat || 36.1447,
-        location_lng: initialData.location_lng || user?.location_lng || -86.8027,
+        location_address: initialData.location_address || '',
+        location_lat: initialData.location_lat || null,
+        location_lng: initialData.location_lng || null,
         target_gender: initialData.target_gender || '',
       });
       setItems(
@@ -220,20 +221,16 @@ const CreateRequestModal = ({ isOpen, onClose, onSuccess, initialData = null, mo
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Location/Address *
-              </label>
-              <input
-                type="text"
-                name="location_address"
-                value={formData.location_address}
-                onChange={handleChange}
-                required
-                className="input-field"
-                placeholder="Your location"
-              />
-            </div>
+            <AddressAutocomplete
+              address={formData.location_address}
+              coords={formData.location_lat ? { lat: formData.location_lat, lng: formData.location_lng } : null}
+              onChange={(address, lat, lng) =>
+                setFormData((f) => ({ ...f, location_address: address, location_lat: lat, location_lng: lng }))
+              }
+              label="Location/Address"
+              required
+              placeholder="Your location"
+            />
 
             <div>
               <div className="flex justify-between items-center mb-2">
