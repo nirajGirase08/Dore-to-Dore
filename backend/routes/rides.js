@@ -168,6 +168,18 @@ router.patch('/:id/accept', authenticate, async (req, res) => {
 
     await ride.update({ driver_id: req.userId, status: 'accepted', accepted_at: new Date(), updated_at: new Date() });
 
+    // Dismiss ride_request notifications for all users (non-blocking)
+    setImmediate(async () => {
+      try {
+        await Notification.update(
+          { is_read: true, is_dismissed: true },
+          { where: { related_id: ride.ride_request_id, notification_type: 'ride_request', is_dismissed: false } }
+        );
+      } catch (err) {
+        console.error('Failed to dismiss ride notifications:', err);
+      }
+    });
+
     // Notify the requester
     const driver = await User.findByPk(req.userId, { attributes: ['name'] });
     await Notification.create({
