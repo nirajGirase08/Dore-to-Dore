@@ -15,16 +15,24 @@ const haversineKm = (lat1, lng1, lat2, lng2) => {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const TYPES = ['', 'tree_down', 'flooding', 'ice', 'power_line', 'debris', 'road_closure', 'other'];
+const TYPES = ['', 'tree_down', 'flooding', 'ice', 'power_line', 'debris', 'road_closure', 'accident', 'other'];
 const SEVERITIES = ['', 'low', 'medium', 'high', 'critical'];
 const STATUSES = ['', 'active', 'resolved', 'verified'];
+const RADIUS_OPTIONS = [
+  { label: '1 mile', value: 1.60934 },
+  { label: '2 miles', value: 3.21869 },
+  { label: '5 miles', value: 8.04672 },
+  { label: '8 miles', value: 12.8748 },
+  { label: '15 miles', value: 24.1402 },
+  { label: 'Any distance', value: null },
+];
 
 const BlockageList = () => {
   const { user } = useAuth();
   const [blockages, setBlockages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({ blockage_type: '', severity: '', status: '' });
+  const [filters, setFilters] = useState({ blockage_type: '', severity: '', status: '', radiusKm: 1.60934 });
 
   const fetchBlockages = async () => {
     setLoading(true);
@@ -39,20 +47,20 @@ const BlockageList = () => {
       const all = data.blockages || [];
       const userLat = user?.location_lat ? parseFloat(user.location_lat) : null;
       const userLng = user?.location_lng ? parseFloat(user.location_lng) : null;
+      const radiusKm = filters.radiusKm;
 
-      // Mirror notification logic:
-      // - reporter always sees their own blockages (to manage/resolve them)
-      // - high/critical → visible to everyone else
-      // - low/medium    → visible only to users within 1 mile of the reporter
       const visible = all.filter((b) => {
         if (b.reporter?.user_id === user?.user_id) return true; // always show own reports
-        if (['high', 'critical'].includes(b.severity)) return true; // high/critical visible to all
-        // low/medium — only show if within 1 mile of the reporter
+
+        // If "Any distance" selected, show everything
+        if (radiusKm === null) return true;
+
+        // Filter by distance from user's location to blockage location
         if (!userLat || !userLng) return false;
-        const rLat = b.reporter?.location_lat ? parseFloat(b.reporter.location_lat) : null;
-        const rLng = b.reporter?.location_lng ? parseFloat(b.reporter.location_lng) : null;
-        if (!rLat || !rLng) return false;
-        return haversineKm(userLat, userLng, rLat, rLng) <= 1.60934;
+        const bLat = b.location_lat ? parseFloat(b.location_lat) : null;
+        const bLng = b.location_lng ? parseFloat(b.location_lng) : null;
+        if (!bLat || !bLng) return false;
+        return haversineKm(userLat, userLng, bLat, bLng) <= radiusKm;
       });
 
       setBlockages(visible);
@@ -101,6 +109,19 @@ const BlockageList = () => {
           <option value="">All Statuses</option>
           {STATUSES.slice(1).map((s) => (
             <option key={s} value={s}>{s}</option>
+          ))}
+        </select>
+
+        <select
+          className="input-field w-auto"
+          value={filters.radiusKm ?? ''}
+          onChange={(e) => setFilters((f) => ({
+            ...f,
+            radiusKm: e.target.value === '' ? null : parseFloat(e.target.value)
+          }))}
+        >
+          {RADIUS_OPTIONS.map((r) => (
+            <option key={r.label} value={r.value ?? ''}>{r.label}</option>
           ))}
         </select>
       </div>

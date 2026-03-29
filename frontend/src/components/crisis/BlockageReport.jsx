@@ -41,15 +41,37 @@ const BlockageReport = ({ onSuccess }) => {
     setGeoLoading(true);
     setError(null);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setForm((f) => ({ ...f, location_address: '' }));
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setCoords({ lat, lng });
+
+        // Reverse geocode to get a human-readable address
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+          );
+          const data = await res.json();
+          if (data.display_name) {
+            setForm((f) => ({ ...f, location_address: data.display_name }));
+          } else {
+            setForm((f) => ({ ...f, location_address: '' }));
+          }
+        } catch {
+          setForm((f) => ({ ...f, location_address: '' }));
+        }
+
         setGeoLoading(false);
       },
-      () => {
-        setError('Unable to retrieve your location. Please enter the address manually.');
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setError('Location access denied. Please allow location access or enter the address manually.');
+        } else {
+          setError('Unable to retrieve your location. Please enter the address manually.');
+        }
         setGeoLoading(false);
-      }
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
     );
   };
 
@@ -147,8 +169,8 @@ const BlockageReport = ({ onSuccess }) => {
           {geoLoading ? 'Getting location…' : '📍 Use Current Location'}
         </button>
         {coords.lat && (
-          <p className="text-sm text-green-700 mb-2">
-            ✓ Location captured ({coords.lat.toFixed(5)}, {coords.lng.toFixed(5)})
+          <p className="text-xs text-green-700 mb-2">
+            ✓ GPS coordinates captured ({coords.lat.toFixed(5)}, {coords.lng.toFixed(5)})
           </p>
         )}
         <input
@@ -158,15 +180,14 @@ const BlockageReport = ({ onSuccess }) => {
           onChange={handleChange}
           placeholder="Or enter address (e.g. 21st Ave S & Broadway)"
           className="input-field"
-          disabled={!!coords.lat}
         />
         {coords.lat && (
           <button
             type="button"
-            onClick={() => setCoords({ lat: null, lng: null })}
+            onClick={() => { setCoords({ lat: null, lng: null }); setForm((f) => ({ ...f, location_address: '' })); }}
             className="text-xs text-gray-500 mt-1 underline"
           >
-            Clear and enter address instead
+            Clear GPS and enter address instead
           </button>
         )}
       </div>
