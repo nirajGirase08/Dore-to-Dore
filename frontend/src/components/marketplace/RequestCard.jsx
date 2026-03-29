@@ -1,6 +1,4 @@
 import React from 'react';
-import { RESOURCE_ICONS } from '../../constants/marketplace';
-
 const urgencyColors = {
   low: 'bg-gray-100 text-gray-800 border-gray-300',
   medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
@@ -9,10 +7,10 @@ const urgencyColors = {
 };
 
 const urgencyLabels = {
-  low: '📅 Low Priority',
-  medium: '📋 Medium Priority',
-  high: '⚠️ High Priority',
-  critical: '🚨 CRITICAL',
+  low: 'Low Priority',
+  medium: 'Medium Priority',
+  high: 'High Priority',
+  critical: 'Critical',
 };
 
 const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfillItem, onView, matchScore, matchDistanceKm }) => {
@@ -37,7 +35,6 @@ const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfill
             matchScore >= 50 ? 'bg-yellow-100 text-yellow-800' :
             'bg-gray-100 text-gray-800'
           }`}>
-            {matchScore >= 80 && '🎯 '}
             {matchScore}% Match
           </div>
         </div>
@@ -74,7 +71,6 @@ const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfill
             <div key={item.item_id} className="flex items-center justify-between text-sm">
               <div className="flex-1 pr-3">
                 <span>
-                  <span className="mr-2">{RESOURCE_ICONS[item.resource_type] || '📦'}</span>
                   <span className="capitalize">{item.resource_type}</span>
                   {item.notes && <span className="text-gray-500 text-xs ml-1">({item.notes})</span>}
                 </span>
@@ -94,7 +90,7 @@ const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfill
                     event.stopPropagation();
                     onFulfillItem(request, item);
                   }}
-                  className="px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+                  className="px-3 py-1 bg-[#8BA18E] text-white text-xs font-semibold rounded-lg hover:bg-[#748a77] transition-colors"
                 >
                   Fulfill Item
                 </button>
@@ -110,7 +106,7 @@ const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfill
           <div>
             <p className="font-medium text-gray-700">{request.user?.name || 'Requester'}</p>
             <p className="text-xs text-gray-500">
-              📍 {request.location_address}
+              Location: {request.location_address}
             </p>
             {request.target_gender && (
               <p className="text-xs text-purple-600">
@@ -125,7 +121,7 @@ const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfill
                   event.stopPropagation();
                   onContact(request);
                 }}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-[#7daed3] text-[#181511] text-sm font-semibold rounded-lg hover:bg-[#6c9cbf] transition-colors"
               >
                 Help
               </button>
@@ -138,7 +134,7 @@ const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfill
                       event.stopPropagation();
                       onEdit(request);
                     }}
-                    className="px-3 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-3 py-2 bg-[#7c6248] text-white text-sm font-semibold rounded-lg hover:bg-[#654f39] transition-colors"
                   >
                     Edit
                   </button>

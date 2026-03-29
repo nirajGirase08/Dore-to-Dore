@@ -27,7 +27,7 @@ export const notifyAuthorities = async (blockage) => {
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: ${severity === 'critical' ? '#dc2626' : '#ea580c'}; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-        <h2 style="margin: 0;">⚠️ ${severityUpper} Road Hazard Reported</h2>
+        <h2 style="margin: 0;">${severityUpper} Road Hazard Reported</h2>
         <p style="margin: 6px 0 0; opacity: 0.9;">Crisis Connect — Vanderbilt Community Platform</p>
       </div>
       <div style="border: 1px solid #e5e7eb; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">

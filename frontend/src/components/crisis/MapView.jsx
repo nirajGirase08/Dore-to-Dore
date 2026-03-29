@@ -16,14 +16,14 @@ const SEVERITY_COLOR = {
 };
 
 const TYPE_ICON = {
-  tree_down:    '🌲',
-  flooding:     '🌊',
-  ice:          '🧊',
-  power_line:   '⚡',
-  debris:       '🪨',
-  road_closure: '🚧',
-  accident:     '🚨',
-  other:        '⚠️',
+  tree_down:    'Tree',
+  flooding:     'Flood',
+  ice:          'Ice',
+  power_line:   'Power',
+  debris:       'Debris',
+  road_closure: 'Closure',
+  accident:     'Accident',
+  other:        'Hazard',
 };
 
 const makeMedicalIcon = (emoji, borderColor) =>
@@ -53,7 +53,7 @@ const fetchMedicalFacilities = async (map) => {
           `<div style="min-width:160px">
             <p style="font-weight:700;margin:0 0 3px">${isHosp ? '🏥' : '🩺'} ${facility.name}</p>
             <p style="font-size:12px;color:#6b7280;margin:0 0 3px">${isHosp ? 'Hospital' : 'Urgent Care / Clinic'}</p>
-            ${facility.phone ? `<p style="font-size:12px;margin:0">📞 ${facility.phone}</p>` : ''}
+            ${facility.phone ? `<p style="font-size:12px;margin:0">Phone: ${facility.phone}</p>` : ''}
           </div>`
         );
     });
@@ -94,7 +94,7 @@ const MapView = ({ contextLabel = null }) => {
         if (blockageLayer.current[id]) return;
 
         const color = SEVERITY_COLOR[b.severity] || '#6b7280';
-        const icon  = TYPE_ICON[b.blockage_type] || '⚠️';
+        const icon  = TYPE_ICON[b.blockage_type] || 'Hazard';
 
         const marker = L.circleMarker(
           [parseFloat(b.location_lat), parseFloat(b.location_lng)],
@@ -136,7 +136,7 @@ const MapView = ({ contextLabel = null }) => {
     })
       .addTo(map)
       .bindPopup(
-        `<p style="font-weight:700;margin:0">📍 Your location</p>${
+        `<p style="font-weight:700;margin:0">Your location</p>${
           user?.location_address
             ? `<p style="font-size:12px;color:#6b7280;margin:4px 0 0">${user.location_address}</p>`
             : ''

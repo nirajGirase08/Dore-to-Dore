@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { conversationsAPI, offersAPI, trustAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { RESOURCE_ICONS } from '../constants/marketplace';
 import TrustSummary from '../components/shared/TrustSummary';
 
 const OfferDetailPage = () => {
@@ -77,7 +76,7 @@ const OfferDetailPage = () => {
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{offer.title}</h1>
-              <p className="mt-2 text-sm text-gray-500">📍 {offer.location_address}</p>
+              <p className="mt-2 text-sm text-gray-500">Location: {offer.location_address}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800">
@@ -96,7 +95,7 @@ const OfferDetailPage = () => {
           )}
 
           <div>
-            <h2 className="mb-4 text-xl font-semibold text-gray-900">Items</h2>
+            <h2 className="mb-4 text-xl font-semibold text-gray-900">Support Available</h2>
             <div className="space-y-4">
               {offer.items?.map((item) => (
                 <div key={item.item_id} className="rounded-xl border border-gray-200 p-4">
@@ -110,7 +109,6 @@ const OfferDetailPage = () => {
                     ) : null}
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xl">{RESOURCE_ICONS[item.resource_type] || '📦'}</span>
                         <h3 className="text-lg font-semibold capitalize text-gray-900">
                           {item.resource_type.replaceAll('_', ' ')}
                         </h3>
@@ -130,7 +128,7 @@ const OfferDetailPage = () => {
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-semibold text-gray-900">Helper Profile</h2>
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">Community Helper Profile</h2>
           <div className="flex items-center gap-4">
             {offer.user?.profile_image_url ? (
               <img
@@ -157,7 +155,7 @@ const OfferDetailPage = () => {
           </div>
 
           <div className="mt-6">
-            <TrustSummary summary={trustSummary} title="Helper Trust" />
+            <TrustSummary summary={trustSummary} title="Helper Trust" variant="dashboard" />
           </div>
 
           {offer.user_id !== user?.user_id && (

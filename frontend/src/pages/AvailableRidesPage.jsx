@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ridesAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import EmergencyRideModal from '../components/rides/EmergencyRideModal';
 
 const URGENCY_COLORS = {
   emergency: 'bg-red-100 text-red-700 border-red-300',
@@ -9,7 +10,7 @@ const URGENCY_COLORS = {
   normal:    'bg-blue-100 text-blue-700 border-blue-300',
 };
 
-const URGENCY_ICONS = { emergency: '🚨', urgent: '⚡', normal: '🚗' };
+const URGENCY_LABELS = { emergency: 'Emergency', urgent: 'Urgent', normal: 'Normal' };
 
 const STATUS_COLORS = {
   accepted:  'bg-blue-100 text-blue-700',
@@ -20,7 +21,7 @@ const STATUS_COLORS = {
 const STATUS_LABELS = {
   accepted:  'Accepted',
   en_route:  'On the way',
-  picked_up: 'Passenger aboard',
+  picked_up: 'Community member aboard',
 };
 
 // Haversine distance in km
@@ -45,8 +46,9 @@ const AvailableRidesPage = () => {
   const [error, setError] = useState('');
   const [accepting, setAccepting] = useState(null);
   const [volunteerPos, setVolunteerPos] = useState(null);
+  const [showEmergencyRideModal, setShowEmergencyRideModal] = useState(false);
 
-  // Get volunteer's location for distance calculation
+  // Get helper location for distance calculation
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
       (pos) => setVolunteerPos({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
@@ -66,7 +68,7 @@ const AvailableRidesPage = () => {
       setMyRequested(myRes.data || []);
       setError('');
     } catch (err) {
-      setError(err.message || 'Failed to load rides.');
+      setError(err.message || 'Failed to load community rides.');
     } finally {
       setLoading(false);
     }
@@ -84,7 +86,7 @@ const AvailableRidesPage = () => {
       await ridesAPI.accept(rideId);
       navigate(`/rides/${rideId}`);
     } catch (err) {
-      alert(err.message || 'Failed to accept ride.');
+      alert(err.message || 'Failed to accept support ride.');
       setAccepting(null);
     }
   };
@@ -93,27 +95,35 @@ const AvailableRidesPage = () => {
     <div className="container-custom py-8 flex items-center justify-center min-h-[400px]">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading rides...</p>
+        <p className="text-gray-600">Loading community rides...</p>
       </div>
     </div>
   );
 
   return (
     <div className="container-custom py-8 max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-1">🚗 Ride Requests</h1>
-        <p className="text-gray-500 text-sm">Help community members get where they need to go</p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 mb-1">Community Rides</h1>
+          <p className="text-gray-500 text-sm">See where people need transportation support and request a community support ride when needed</p>
+        </div>
+        <button
+          onClick={() => setShowEmergencyRideModal(true)}
+          className="flex-shrink-0 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-red-700"
+        >
+          Request Dore Support Ride
+        </button>
       </div>
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">{error}</div>
       )}
 
-      {/* My active rides as driver */}
+      {/* Rides I’m supporting */}
       {myDriving.length > 0 && (
         <section className="mb-8">
           <h2 className="text-xl font-semibold text-gray-700 mb-4">
-            My Active Rides
+            Rides I’m Supporting
             <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">{myDriving.length}</span>
           </h2>
           <div className="space-y-3">
@@ -127,16 +137,16 @@ const AvailableRidesPage = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`px-2 py-0.5 rounded text-xs font-bold border ${URGENCY_COLORS[ride.urgency]}`}>
-                        {URGENCY_ICONS[ride.urgency]} {ride.urgency}
+                        {URGENCY_LABELS[ride.urgency] || ride.urgency}
                       </span>
                       <span className={`px-2 py-0.5 rounded text-xs font-bold ${STATUS_COLORS[ride.status]}`}>
                         {STATUS_LABELS[ride.status]}
                       </span>
                     </div>
                     <div className="text-sm space-y-1">
-                      <p className="text-gray-600"><span className="text-green-600 font-medium">📍 From:</span> {ride.pickup_address || 'Unknown'}</p>
-                      <p className="text-gray-600"><span className="text-red-600 font-medium">🏁 To:</span> {ride.destination_address || 'Unknown'}</p>
-                      {ride.requester && <p className="text-gray-500 text-xs">Passenger: <span className="font-medium">{ride.requester.name}</span></p>}
+                      <p className="text-gray-600"><span className="text-green-600 font-medium">From:</span> {ride.pickup_address || 'Unknown'}</p>
+                      <p className="text-gray-600"><span className="text-red-600 font-medium">To:</span> {ride.destination_address || 'Unknown'}</p>
+                      {ride.requester && <p className="text-gray-500 text-xs">Community member: <span className="font-medium">{ride.requester.name}</span></p>}
                     </div>
                   </div>
                   <div className="flex-shrink-0 text-right">
@@ -149,10 +159,10 @@ const AvailableRidesPage = () => {
         </section>
       )}
 
-      {/* My requested rides */}
+      {/* My support ride requests */}
       {myRequested.filter(r => ['pending','accepted','en_route','picked_up'].includes(r.status)).length > 0 && (
         <section className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4">My Ride Requests</h2>
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">My Support Ride Requests</h2>
           <div className="space-y-3">
             {myRequested
               .filter(r => ['pending','accepted','en_route','picked_up'].includes(r.status))
@@ -166,7 +176,7 @@ const AvailableRidesPage = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className={`px-2 py-0.5 rounded text-xs font-bold border ${URGENCY_COLORS[ride.urgency]}`}>
-                          {URGENCY_ICONS[ride.urgency]} {ride.urgency}
+                          {URGENCY_LABELS[ride.urgency] || ride.urgency}
                         </span>
                         <span className="text-xs text-gray-500 capitalize">{ride.status.replace('_', ' ')}</span>
                       </div>
@@ -182,10 +192,10 @@ const AvailableRidesPage = () => {
         </section>
       )}
 
-      {/* Available rides to accept */}
+      {/* People needing ride support */}
       <section>
         <h2 className="text-xl font-semibold text-gray-700 mb-4">
-          Available Requests
+          People Needing Ride Support
           {available.length > 0 && (
             <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded-full">{available.length}</span>
           )}
@@ -193,9 +203,8 @@ const AvailableRidesPage = () => {
 
         {available.length === 0 ? (
           <div className="card text-center py-12">
-            <p className="text-5xl mb-4">🎉</p>
-            <p className="text-gray-600 font-medium">No pending ride requests right now</p>
-            <p className="text-gray-400 text-sm mt-1">Check back soon — community members may need a ride</p>
+            <p className="text-gray-600 font-medium">No pending support ride requests right now</p>
+            <p className="text-gray-400 text-sm mt-1">Check back soon — community members may need transportation support</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -211,11 +220,11 @@ const AvailableRidesPage = () => {
                       {/* Header row */}
                       <div className="flex items-center gap-2 mb-3 flex-wrap">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${URGENCY_COLORS[ride.urgency]}`}>
-                          {URGENCY_ICONS[ride.urgency]} {ride.urgency.charAt(0).toUpperCase() + ride.urgency.slice(1)}
+                          {URGENCY_LABELS[ride.urgency] || ride.urgency}
                         </span>
                         {distKm != null && (
                           <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                            📍 {distKm < 1 ? `${Math.round(distKm * 1000)}m` : `${distKm.toFixed(1)}km`} from you
+                            {distKm < 1 ? `${Math.round(distKm * 1000)}m` : `${distKm.toFixed(1)}km`} from you
                           </span>
                         )}
                         <span className="text-xs text-gray-400 ml-auto">
@@ -226,14 +235,14 @@ const AvailableRidesPage = () => {
                       {/* Addresses */}
                       <div className="space-y-1.5 text-sm mb-3">
                         <div className="flex items-start gap-2">
-                          <span className="text-green-600 mt-0.5 flex-shrink-0">📍</span>
+                          <span className="text-green-600 mt-0.5 flex-shrink-0">From</span>
                           <div>
                             <p className="text-xs text-gray-400">Pickup</p>
                             <p className="text-gray-700 font-medium">{ride.pickup_address || 'Unknown location'}</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-2">
-                          <span className="text-red-600 mt-0.5 flex-shrink-0">🏁</span>
+                          <span className="text-red-600 mt-0.5 flex-shrink-0">To</span>
                           <div>
                             <p className="text-xs text-gray-400">Destination</p>
                             <p className="text-gray-700 font-medium">{ride.destination_address || 'Unknown location'}</p>
@@ -244,17 +253,17 @@ const AvailableRidesPage = () => {
                       {/* Notes */}
                       {ride.notes && (
                         <p className="text-xs text-gray-500 bg-gray-50 rounded p-2 mb-3">
-                          📝 {ride.notes}
+                          Notes: {ride.notes}
                         </p>
                       )}
 
-                      {/* Requester info */}
+                      {/* Community member info */}
                       {ride.requester && (
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                           <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs">
                             {ride.requester.name?.charAt(0).toUpperCase()}
                           </span>
-                          <span>Requested by <span className="font-medium text-gray-700">{ride.requester.name}</span></span>
+                          <span>Requested by community member <span className="font-medium text-gray-700">{ride.requester.name}</span></span>
                         </div>
                       )}
                     </div>
@@ -272,7 +281,7 @@ const AvailableRidesPage = () => {
                             : 'bg-blue-600 hover:bg-blue-700'
                         }`}
                       >
-                        {accepting === ride.ride_request_id ? '...' : 'Accept'}
+                        {accepting === ride.ride_request_id ? '...' : 'Support This Ride'}
                       </button>
                       <button
                         onClick={() => navigate(`/rides/${ride.ride_request_id}`)}
@@ -288,6 +297,11 @@ const AvailableRidesPage = () => {
           </div>
         )}
       </section>
+
+      <EmergencyRideModal
+        isOpen={showEmergencyRideModal}
+        onClose={() => setShowEmergencyRideModal(false)}
+      />
     </div>
   );
 };

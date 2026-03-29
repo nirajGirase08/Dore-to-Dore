@@ -18,7 +18,7 @@ const AlertBanner = () => {
       }`}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-lg flex-shrink-0">{isCritical ? '⚠️' : '🚨'}</span>
+        <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-white"></span>
         <div className="min-w-0">
           <span className="font-bold">{latest.title}</span>
           {latest.message && (

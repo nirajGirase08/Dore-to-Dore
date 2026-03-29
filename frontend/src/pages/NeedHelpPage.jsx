@@ -263,10 +263,11 @@ const NeedHelpPage = () => {
 
   return (
     <div className="container-custom py-8">
+      <div className="page-shell page-need-theme p-6 md:p-8">
       {/* Header */}
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Request Help & Resources</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">I Need Help</h1>
           <p className="text-gray-600">
             Connect with volunteers who can provide the support you need
           </p>
@@ -275,7 +276,7 @@ const NeedHelpPage = () => {
         {/* Messages Button with Badge */}
         <button
           onClick={() => navigate('/messages')}
-          className="relative flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md"
+          className="relative flex items-center space-x-2 px-4 py-2 bg-[#181511] text-[#f8f4ec] rounded-lg hover:bg-[#2a261f] transition-colors shadow-md"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -379,8 +380,8 @@ const NeedHelpPage = () => {
             />
             <p className="text-xs text-gray-500 mt-2 flex items-center gap-3">
               <span className="inline-flex items-center gap-1"><span style={{color:'#16a34a',fontWeight:700}}>▲</span> Volunteer</span>
-              <span>📍 Your location</span>
-              <span className="text-blue-400">— — Radius boundary</span>
+              <span>Your location</span>
+              <span className="text-[#7daed3]">Radius boundary</span>
             </p>
           </div>
         );
@@ -393,10 +394,10 @@ const NeedHelpPage = () => {
             setAiDraftRequest(null);
             setShowCreateModal(true);
           }}
-          className="card hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200"
+          className="card hover:shadow-lg transition-shadow bg-[linear-gradient(135deg,rgba(125,174,211,0.18),rgba(248,244,236,0.95))] border-2 border-[#a9c4db]"
         >
           <div className="flex items-center space-x-4">
-            <div className="bg-blue-500 text-white p-4 rounded-full">
+            <div className="bg-[#7daed3] text-white p-4 rounded-full">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
@@ -410,10 +411,10 @@ const NeedHelpPage = () => {
 
         <button
           onClick={() => setShowAISuggestionModal(true)}
-          className="card hover:shadow-lg transition-shadow bg-gradient-to-br from-cyan-50 to-cyan-100 border-2 border-cyan-200"
+          className="card hover:shadow-lg transition-colors bg-[#e9e0cf] border-2 border-[#dccca9] hover:bg-[#dccca9]"
         >
           <div className="flex items-center space-x-4">
-            <div className="bg-cyan-500 text-white p-4 rounded-full">
+            <div className="bg-[#181511] text-[#e9e0cf] p-4 rounded-full">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2m4-2a8 8 0 11-16 0 8 8 0 0116 0zm-8-8v2m0 12v2m8-8h-2M6 12H4" />
               </svg>
@@ -470,7 +471,7 @@ const NeedHelpPage = () => {
                 {filteredActiveRequests.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
-                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2">Active</span>
+                      <span className="bg-[#e4eef7] text-[#31546c] px-3 py-1 rounded-full text-sm mr-2">Active</span>
                       <span className="text-gray-500">({filteredActiveRequests.length})</span>
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -570,7 +571,7 @@ const NeedHelpPage = () => {
               All Available Help
               {globalSearch && <span className="ml-2 text-base font-normal text-gray-500">({filteredOffers.length})</span>}
             </h2>
-            <p className="text-sm text-gray-600">Search and browse all eligible offers, sorted by match score</p>
+            <p className="text-sm text-gray-600">Search and browse all available community support, sorted by match score</p>
           </div>
           <button
             onClick={() => setShowAllOffers((v) => !v)}
@@ -585,7 +586,7 @@ const NeedHelpPage = () => {
           filteredOffers.length === 0 ? (
             <div className="card bg-gray-50 border-2 border-dashed border-gray-300">
               <div className="text-center py-12">
-                <p className="text-gray-600">No matching offers found</p>
+                <p className="text-gray-600">No matching community support found</p>
               </div>
             </div>
           ) : (
@@ -692,6 +693,7 @@ const NeedHelpPage = () => {
         onClose={() => setShowAISuggestionModal(false)}
         onApply={handleApplyAISuggestion}
       />
+      </div>
     </div>
   );
 };

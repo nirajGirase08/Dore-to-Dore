@@ -169,7 +169,7 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess, initialData = null, mode
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800">
-              {mode === 'edit' ? 'Edit Offer' : 'Create New Offer'}
+              {mode === 'edit' ? 'Edit Support Listing' : 'Add Support You Can Provide'}
             </h2>
             <button
               onClick={onClose}
@@ -213,7 +213,7 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess, initialData = null, mode
                 onChange={handleChange}
                 rows="3"
                 className="input-field"
-                placeholder="Describe what you're offering..."
+                placeholder="Describe the support you can provide..."
               />
             </div>
 
@@ -275,7 +275,7 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess, initialData = null, mode
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Items to Offer *
+                  Support Items *
                 </label>
                 <button
                   type="button"
@@ -352,7 +352,7 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess, initialData = null, mode
                 disabled={loading}
                 className="btn-primary flex-1"
               >
-                {loading ? (mode === 'edit' ? 'Saving...' : 'Creating...') : (mode === 'edit' ? 'Save Offer' : 'Create Offer')}
+                {loading ? (mode === 'edit' ? 'Saving...' : 'Creating...') : (mode === 'edit' ? 'Save Support Listing' : 'Add Support Listing')}
               </button>
               <button
                 type="button"

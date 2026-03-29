@@ -5,6 +5,11 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['"Libre Caslon Text"', 'Georgia', 'serif'],
+        accent: ['Antonio', 'Impact', 'sans-serif'],
+      },
       keyframes: {
         'slide-in': {
           '0%':   { opacity: '0', transform: 'translateX(100%)' },
@@ -16,16 +21,26 @@ export default {
       },
       colors: {
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          50: '#f8f4ec',
+          100: '#efe7d6',
+          200: '#dccca9',
+          300: '#c7ae75',
+          400: '#b49346',
+          500: '#a1842f',
+          600: '#6c5b20',
+          700: '#3f3413',
+          800: '#241e11',
+          900: '#181511',
+        },
+        vandy: {
+          black: '#181511',
+          gold: '#a1842f',
+          cream: '#f8f4ec',
+          sand: '#d8ccbc',
+          oak: '#7c6248',
+          sage: '#759a90',
+          sky: '#7daed3',
+          highlight: '#e2aa58',
         },
         danger: {
           50: '#fef2f2',

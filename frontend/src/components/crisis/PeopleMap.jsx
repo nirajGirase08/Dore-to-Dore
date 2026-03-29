@@ -99,7 +99,7 @@ const PeopleMap = ({ people, mode, userLat, userLng, radiusKm, radiusLabel, onUs
       radius: 11, color: '#1e40af', weight: 3, fillColor: '#3b82f6', fillOpacity: 1,
     })
       .addTo(map)
-      .bindPopup('<p style="font-weight:700;margin:0">📍 Your location</p>');
+      .bindPopup('<p style="font-weight:700;margin:0">Your location</p>');
 
     // Global callback used by popup buttons (Leaflet popup HTML can't call React fns directly)
     window.__peopleMapUserClick = (userId, userName) => {

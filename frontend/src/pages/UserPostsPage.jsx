@@ -117,7 +117,7 @@ const UserPostsPage = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">{displayName}</h1>
             <p className="text-gray-500 text-sm">
-              {isRequests ? 'Requests for help' : 'Offers to help'}
+              {isRequests ? 'Requests for help' : 'Support this person can provide'}
             </p>
           </div>
         </div>
@@ -143,12 +143,12 @@ const UserPostsPage = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            <p className="text-gray-500 text-lg">No active {isRequests ? 'requests' : 'offers'} from {displayName}</p>
+            <p className="text-gray-500 text-lg">No active {isRequests ? 'requests' : 'support listings'} from {displayName}</p>
           </div>
         </div>
       ) : (
         <>
-          <p className="text-sm text-gray-500 mb-4">{posts.length} active {isRequests ? 'request' : 'offer'}{posts.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-gray-500 mb-4">{posts.length} active {isRequests ? 'request' : 'support listing'}{posts.length !== 1 ? 's' : ''}</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {isRequests
               ? posts.map((request) => (

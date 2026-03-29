@@ -196,10 +196,10 @@ const CreateRequestModal = ({ isOpen, onClose, onSuccess, initialData = null, mo
                 ))}
               </select>
               <p className="text-xs text-gray-500 mt-1">
-                {formData.urgency_level === 'critical' && '🚨 Critical: Immediate assistance needed'}
-                {formData.urgency_level === 'high' && '⚠️ High: Urgent, needed soon'}
-                {formData.urgency_level === 'medium' && '📋 Medium: Needed within a day or two'}
-                {formData.urgency_level === 'low' && '📅 Low: Not urgent'}
+                {formData.urgency_level === 'critical' && 'Critical: Immediate assistance needed'}
+                {formData.urgency_level === 'high' && 'High: Urgent, needed soon'}
+                {formData.urgency_level === 'medium' && 'Medium: Needed within a day or two'}
+                {formData.urgency_level === 'low' && 'Low: Not urgent'}
               </p>
             </div>
 

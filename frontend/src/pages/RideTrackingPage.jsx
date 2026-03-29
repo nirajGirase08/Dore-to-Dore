@@ -7,12 +7,12 @@ import { useAuth } from '../contexts/AuthContext';
 
 const STATUS_STEPS = ['pending', 'accepted', 'en_route', 'picked_up', 'completed'];
 const STATUS_LABELS = {
-  pending:   { label: 'Waiting for a volunteer',  color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-300' },
-  accepted:  { label: 'Volunteer accepted!',       color: 'text-blue-600',   bg: 'bg-blue-50 border-blue-300' },
-  en_route:  { label: 'Driver is on the way',      color: 'text-blue-600',   bg: 'bg-blue-50 border-blue-300' },
+  pending:   { label: 'Waiting for a Commodore to respond',  color: 'text-yellow-600', bg: 'bg-yellow-50 border-yellow-300' },
+  accepted:  { label: 'Commodore accepted!',       color: 'text-blue-600',   bg: 'bg-blue-50 border-blue-300' },
+  en_route:  { label: 'Commodore is on the way',      color: 'text-blue-600',   bg: 'bg-blue-50 border-blue-300' },
   picked_up: { label: 'En route to destination',   color: 'text-purple-600', bg: 'bg-purple-50 border-purple-300' },
-  completed: { label: 'Ride completed!',            color: 'text-green-600',  bg: 'bg-green-50 border-green-300' },
-  cancelled: { label: 'Ride cancelled',             color: 'text-gray-600',   bg: 'bg-gray-50 border-gray-300' },
+  completed: { label: 'Support ride completed',            color: 'text-green-600',  bg: 'bg-green-50 border-green-300' },
+  cancelled: { label: 'Support ride cancelled',             color: 'text-gray-600',   bg: 'bg-gray-50 border-gray-300' },
 };
 
 const URGENCY_COLORS = { emergency: 'bg-red-100 text-red-700', urgent: 'bg-orange-100 text-orange-700', normal: 'bg-blue-100 text-blue-700' };
@@ -76,7 +76,7 @@ const RideTrackingPage = () => {
         html: '<div style="background:#16a34a;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>',
         iconSize: [14, 14], iconAnchor: [7, 7],
       }),
-    }).addTo(map).bindPopup(`<b>📍 Pickup</b><br>${ride.pickup_address || ''}`);
+    }).addTo(map).bindPopup(`<b>Pickup</b><br>${ride.pickup_address || ''}`);
 
     // Destination marker
     L.marker([destLat, destLng], {
@@ -85,7 +85,7 @@ const RideTrackingPage = () => {
         html: '<div style="background:#dc2626;width:14px;height:14px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>',
         iconSize: [14, 14], iconAnchor: [7, 7],
       }),
-    }).addTo(map).bindPopup(`<b>🏁 Destination</b><br>${ride.destination_address || ''}`);
+    }).addTo(map).bindPopup(`<b>Destination</b><br>${ride.destination_address || ''}`);
 
     // Draw routes
     if (ride.routes?.length) {
@@ -100,7 +100,7 @@ const RideTrackingPage = () => {
         }).addTo(map).bindPopup(
           `<b>Route ${idx + 1}</b> ${isBest ? '(Recommended)' : ''}<br>` +
           `${route.distance_km} km · ${route.duration_min} min` +
-          (route.has_blockages ? `<br><span style="color:#dc2626">⚠️ ${route.blockage_warnings.length} hazard(s) nearby</span>` : '')
+          (route.has_blockages ? `<br><span style="color:#dc2626">${route.blockage_warnings.length} hazard(s) nearby</span>` : '')
         );
 
         // Blockage warning pins on best route
@@ -108,7 +108,7 @@ const RideTrackingPage = () => {
           route.blockage_warnings.forEach((w) => {
             L.circleMarker([w.lat, w.lng], { radius: 10, color: '#dc2626', fillColor: '#fca5a5', fillOpacity: 0.8, weight: 2 })
               .addTo(map)
-              .bindPopup(`<b>⚠️ ${w.type?.replace(/_/g, ' ')}</b><br>Severity: ${w.severity}<br>${w.address || ''}`);
+              .bindPopup(`<b>${w.type?.replace(/_/g, ' ')}</b><br>Severity: ${w.severity}<br>${w.address || ''}`);
           });
         }
       });
@@ -134,7 +134,7 @@ const RideTrackingPage = () => {
       await ridesAPI.updateStatus(rideId, newStatus);
       await fetchRide();
     } catch (err) {
-      alert(err.message || 'Failed to update status.');
+      alert(err.message || 'Failed to update support ride status.');
     } finally {
       setUpdatingStatus(false);
     }
@@ -144,7 +144,7 @@ const RideTrackingPage = () => {
     <div className="container-custom py-8 flex items-center justify-center min-h-[400px]">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading ride...</p>
+        <p className="text-gray-600">Loading support ride...</p>
       </div>
     </div>
   );
@@ -171,32 +171,32 @@ const RideTrackingPage = () => {
           </svg>
           Back
         </button>
-        <h1 className="text-2xl font-bold text-gray-800">Ride Request</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Support Ride Request</h1>
         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${URGENCY_COLORS[ride.urgency]}`}>
           {ride.urgency}
         </span>
       </div>
 
       {/* Status banner */}
-      <div className={`mb-6 p-4 rounded-xl border-2 ${statusInfo.bg} flex items-center gap-3`}>
-        <div className={`text-2xl font-bold ${statusInfo.color}`}>
-          {ride.status === 'pending'   && '⏳'}
-          {ride.status === 'accepted'  && '✅'}
-          {ride.status === 'en_route'  && '🚗'}
-          {ride.status === 'picked_up' && '🛣️'}
-          {ride.status === 'completed' && '🎉'}
-          {ride.status === 'cancelled' && '❌'}
+      <div className="mb-6 flex items-center gap-3 rounded-xl border border-[#b7a88c] bg-[#E0D5C0] p-4">
+        <div className="text-2xl font-bold text-black">
+          {ride.status === 'pending'   && 'Pending'}
+          {ride.status === 'accepted'  && 'Accepted'}
+          {ride.status === 'en_route'  && 'En Route'}
+          {ride.status === 'picked_up' && 'Picked Up'}
+          {ride.status === 'completed' && 'Completed'}
+          {ride.status === 'cancelled' && 'Cancelled'}
         </div>
         <div>
-          <p className={`font-bold text-lg ${statusInfo.color}`}>{statusInfo.label}</p>
-          {ride.status === 'pending' && <p className="text-sm text-gray-500">Notified all nearby volunteers — hang tight!</p>}
+          <p className="text-lg font-bold text-black">{statusInfo.label}</p>
+          {ride.status === 'pending' && <p className="text-sm text-black">Nearby Commodores have been notified.</p>}
         </div>
       </div>
 
       {/* Rerouting / hazard banners */}
       {bestRoute?.rerouted_due_to_hazard && (
         <div className="mb-3 p-3 rounded-lg border bg-blue-50 border-blue-300 text-sm flex items-start gap-2">
-          <span className="text-xl">🔀</span>
+          <span className="text-xl">Route</span>
           <div>
             <p className="font-semibold text-blue-800">Route changed due to road hazard</p>
             <p className="text-blue-700 text-xs mt-0.5">
@@ -210,7 +210,7 @@ const RideTrackingPage = () => {
 
       {bestRoute?.no_safe_alternative && (
         <div className="mb-3 p-3 rounded-lg border bg-red-50 border-red-300 text-sm flex items-start gap-2">
-          <span className="text-xl">🚨</span>
+          <span className="text-xl">Alert</span>
           <div>
             <p className="font-semibold text-red-800">No safe alternative available</p>
             <p className="text-red-700 text-xs mt-0.5">
@@ -222,19 +222,15 @@ const RideTrackingPage = () => {
 
       {/* Route summary */}
       {bestRoute && (
-        <div className={`mb-4 p-3 rounded-lg border text-sm flex flex-wrap items-center gap-4 ${
-          bestRoute.no_safe_alternative ? 'bg-red-50 border-red-300' :
-          bestRoute.has_blockages      ? 'bg-orange-50 border-orange-300' :
-                                         'bg-blue-50 border-blue-200'
-        }`}>
-          <span className="font-semibold">Recommended route:</span>
-          <span>{bestRoute.distance_km} km · ~{bestRoute.duration_min} min</span>
+        <div className="mb-4 flex flex-wrap items-center gap-4 rounded-lg border border-[#b7a88c] bg-[#E0D5C0] p-3 text-sm text-black">
+          <span className="font-semibold text-black">Recommended route:</span>
+          <span className="text-black">{bestRoute.distance_km} km · ~{bestRoute.duration_min} min</span>
           {bestRoute.has_blockages && (
-            <span className={`font-medium ${bestRoute.no_safe_alternative ? 'text-red-700' : 'text-orange-700'}`}>
-              ⚠️ {bestRoute.blockage_warnings.length} road hazard(s) near route
+            <span className="font-medium text-black">
+              {bestRoute.blockage_warnings.length} road hazard(s) near route
             </span>
           )}
-          {!bestRoute.has_blockages && <span className="text-green-700 font-medium">✅ Route is clear</span>}
+          {!bestRoute.has_blockages && <span className="font-medium text-black">Route is clear</span>}
         </div>
       )}
 
@@ -261,16 +257,16 @@ const RideTrackingPage = () => {
           <h3 className="font-semibold text-gray-700 mb-2">Trip Details</h3>
           <div className="space-y-2 text-sm">
             <div className="flex items-start gap-2">
-              <span className="text-green-600 mt-0.5">📍</span>
+              <span className="text-green-600 mt-0.5">Pickup</span>
               <div><p className="text-xs text-gray-500">Pickup</p><p className="font-medium">{ride.pickup_address || 'Unknown'}</p></div>
             </div>
             <div className="flex items-start gap-2">
-              <span className="text-red-600 mt-0.5">🏁</span>
+              <span className="text-red-600 mt-0.5">Destination</span>
               <div><p className="text-xs text-gray-500">Destination</p><p className="font-medium">{ride.destination_address || 'Unknown'}</p></div>
             </div>
             {ride.notes && (
               <div className="flex items-start gap-2">
-                <span className="mt-0.5">📝</span>
+                <span className="mt-0.5">Notes</span>
                 <div><p className="text-xs text-gray-500">Notes</p><p>{ride.notes}</p></div>
               </div>
             )}
@@ -278,7 +274,7 @@ const RideTrackingPage = () => {
         </div>
 
         <div className="card">
-          <h3 className="font-semibold text-gray-700 mb-2">{isRequester ? 'Your Driver' : 'Requester'}</h3>
+          <h3 className="font-semibold text-gray-700 mb-2">{isRequester ? 'Your Commodore Helper' : 'Community Member'}</h3>
           {isRequester ? (
             ride.driver ? (
               <div className="flex items-center gap-3">
@@ -290,7 +286,7 @@ const RideTrackingPage = () => {
                   {ride.driver.phone && <p className="text-sm text-gray-500">{ride.driver.phone}</p>}
                 </div>
               </div>
-            ) : <p className="text-gray-500 text-sm">No driver yet — waiting for a volunteer to accept</p>
+            ) : <p className="text-gray-500 text-sm">No Commodore yet — waiting for someone to accept</p>
           ) : (
             ride.requester && (
               <div className="flex items-center gap-3">
@@ -307,31 +303,31 @@ const RideTrackingPage = () => {
         </div>
       </div>
 
-      {/* Driver action buttons */}
+      {/* Commodore action buttons */}
       {isDriver && (
         <div className="flex flex-wrap gap-3">
           {ride.status === 'accepted' && (
             <button onClick={() => handleStatusUpdate('en_route')} disabled={updatingStatus}
               className="btn-primary bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
-              🚗 I'm on my way
+              I'm on my way
             </button>
           )}
           {ride.status === 'en_route' && (
             <button onClick={() => handleStatusUpdate('picked_up')} disabled={updatingStatus}
               className="btn-primary bg-purple-600 hover:bg-purple-700 disabled:opacity-50">
-              🙋 Passenger picked up
+              Community member picked up
             </button>
           )}
           {ride.status === 'picked_up' && (
             <button onClick={() => handleStatusUpdate('completed')} disabled={updatingStatus}
               className="btn-primary bg-green-600 hover:bg-green-700 disabled:opacity-50">
-              ✅ Ride completed
+              Support ride completed
             </button>
           )}
           {['accepted', 'en_route'].includes(ride.status) && (
             <button onClick={() => handleStatusUpdate('cancelled')} disabled={updatingStatus}
               className="px-4 py-2 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50">
-              Cancel ride
+              Cancel support ride
             </button>
           )}
         </div>
@@ -341,7 +337,7 @@ const RideTrackingPage = () => {
       {isRequester && ride.status === 'pending' && (
         <button onClick={() => handleStatusUpdate('cancelled')} disabled={updatingStatus}
           className="px-4 py-2 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50">
-          Cancel request
+          Cancel support request
         </button>
       )}
     </div>

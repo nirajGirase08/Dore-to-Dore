@@ -60,7 +60,11 @@ const NewsSummaryModal = ({ isOpen, onClose }) => {
               : 'News summaries will use current weather and live headlines.'}
           </div>
           <div className="flex items-end">
-            <button onClick={handleGenerate} disabled={loading} className="btn-primary w-full md:w-auto">
+            <button
+              onClick={handleGenerate}
+              disabled={loading}
+              className="btn-primary w-full md:w-auto"
+            >
               {loading ? 'Summarizing...' : 'Generate'}
             </button>
           </div>
@@ -80,13 +84,13 @@ const NewsSummaryModal = ({ isOpen, onClose }) => {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-4">
-                <p className="text-sm font-semibold text-cyan-950">Weather Context</p>
-                <p className="mt-2 text-sm text-cyan-900">{result.summary?.weather_summary}</p>
+              <div className="rounded-xl border border-[#b7a88c] bg-[#E0D5C0] p-4">
+                <p className="text-sm font-semibold text-black">Weather Context</p>
+                <p className="mt-2 text-sm text-black">{result.summary?.weather_summary}</p>
               </div>
-              <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
-                <p className="text-sm font-semibold text-orange-950">Blockages Reported</p>
-                <p className="mt-2 text-sm text-orange-900">{result.summary?.blockage_summary}</p>
+              <div className="rounded-xl border border-[#b7a88c] bg-[#E0D5C0] p-4">
+                <p className="text-sm font-semibold text-black">Blockages Reported</p>
+                <p className="mt-2 text-sm text-black">{result.summary?.blockage_summary}</p>
               </div>
             </div>
 
@@ -102,9 +106,9 @@ const NewsSummaryModal = ({ isOpen, onClose }) => {
             )}
 
             {(result.summary?.recommended_watchouts || []).length > 0 && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                <p className="text-sm font-semibold text-amber-900">Watchouts</p>
-                <ul className="mt-2 space-y-2 text-sm text-amber-800">
+              <div className="rounded-xl border border-[#b7a88c] bg-[#E0D5C0] p-4">
+                <p className="text-sm font-semibold text-black">Watchouts</p>
+                <ul className="mt-2 space-y-2 text-sm text-black">
                   {result.summary.recommended_watchouts.map((point) => (
                     <li key={point}>• {point}</li>
                   ))}

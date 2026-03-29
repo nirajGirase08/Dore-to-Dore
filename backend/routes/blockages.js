@@ -38,10 +38,10 @@ const dispatchBlockageNotifications = async (blockage) => {
       || (location_lat ? `${parseFloat(location_lat).toFixed(4)}, ${parseFloat(location_lng).toFixed(4)}` : 'unknown location');
 
     const title = severity === 'critical'
-      ? `⚠️ Critical Blockage: ${typeLabel}`
+      ? `Critical Blockage: ${typeLabel}`
       : severity === 'high'
-      ? `🚨 High-Severity Blockage: ${typeLabel}`
-      : `🚧 Nearby Blockage: ${typeLabel}`;
+      ? `High-Severity Blockage: ${typeLabel}`
+      : `Nearby Blockage: ${typeLabel}`;
 
     const message = `${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)} reported at ${locLabel}. Severity: ${severity}.`;
     const notification_type = isHighSeverity ? 'blockage_alert' : 'blockage_nearby';

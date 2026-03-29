@@ -202,11 +202,10 @@ const BlockageReport = ({ onSuccess }) => {
   if (success) {
     return (
       <div className="card text-center">
-        <div className="text-5xl mb-4">✅</div>
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Blockage Reported!</h2>
         <p className="text-gray-600 mb-2">Your report has been submitted successfully.</p>
         {success.authority_notified && (
-          <p className="text-green-700 font-semibold mb-4">✓ Authorities have been notified.</p>
+          <p className="text-green-700 font-semibold mb-4">Authorities have been notified.</p>
         )}
         <button
           className="btn-primary"
@@ -243,7 +242,7 @@ const BlockageReport = ({ onSuccess }) => {
           disabled={geoLoading}
           className="btn-secondary text-sm py-2 px-4 mb-3"
         >
-          {geoLoading ? 'Getting location…' : '📍 Use Current Location'}
+          {geoLoading ? 'Getting location…' : 'Use Current Location'}
         </button>
 
         {coords.lat && (
@@ -378,7 +377,7 @@ const BlockageReport = ({ onSuccess }) => {
           </div>
         ) : (
           <label className="flex items-center gap-3 cursor-pointer border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 hover:border-primary-400 transition-colors">
-            <span className="text-2xl">📷</span>
+            <span className="text-base font-semibold">Photo</span>
             <div>
               <p className="text-sm font-medium text-gray-700">Upload a photo</p>
               <p className="text-xs text-gray-400">JPG, PNG, or WEBP · max 5 MB</p>

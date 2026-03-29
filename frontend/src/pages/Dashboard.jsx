@@ -3,23 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useDemoContext } from '../contexts/DemoContext';
-import { conversationsAPI, trustAPI } from '../services/api';
+import { trustAPI } from '../services/api';
 import PendingFeedbackSection from '../components/shared/PendingFeedbackSection';
 import TrustSummary from '../components/shared/TrustSummary';
 import MapView from '../components/crisis/MapView';
 import NewsSummaryModal from '../components/dashboard/NewsSummaryModal';
 import DemoContextBanner from '../components/shared/DemoContextBanner';
-import EmergencyRideModal from '../components/rides/EmergencyRideModal';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const { demoEnabled, toggleDemoEnabled, demoRange } = useDemoContext();
   const navigate = useNavigate();
-  const [unreadCount, setUnreadCount] = useState(0);
   const [trustSummary, setTrustSummary] = useState(null);
   const [pendingFeedback, setPendingFeedback] = useState([]);
   const [showNewsSummaryModal, setShowNewsSummaryModal] = useState(false);
-  const [showRideModal, setShowRideModal] = useState(false);
 
   const loadTrust = async () => {
     try {
@@ -32,22 +29,7 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    const loadUnreadCount = async () => {
-      try {
-        const response = await conversationsAPI.getUnreadCount();
-        setUnreadCount(response.data?.unread_count || 0);
-      } catch (error) {
-        console.error('Failed to fetch unread count:', error);
-      }
-    };
-
-    loadUnreadCount();
     loadTrust();
-    const intervalId = window.setInterval(loadUnreadCount, 5000);
-
-    return () => {
-      window.clearInterval(intervalId);
-    };
   }, []);
 
   return (
@@ -67,74 +49,38 @@ const Dashboard = () => {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-4xl font-bold text-gray-800 mb-1">
-            Welcome to Dore-to-Dore, {user?.name}!
+            Welcome, {user?.name}!
           </h1>
-          <p className="text-lg text-gray-600">
+          {/* <p className="text-lg text-gray-600">
             How would you like to help the Vanderbilt community today?
-          </p>
+          </p> */}
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">
           <button
             onClick={toggleDemoEnabled}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 font-semibold text-sm shadow-md transition-colors ${
+            className={`relative inline-flex h-9 w-16 items-center rounded-full shadow-md transition-colors ${
               demoEnabled
-                ? 'bg-amber-500 text-white hover:bg-amber-600'
-                : 'bg-white text-gray-800 border border-gray-200 hover:bg-gray-50'
+                ? 'bg-[#dccca9]'
+                : 'bg-[#e9e0cf]'
             }`}
+            aria-pressed={demoEnabled}
+            aria-label={demoEnabled ? 'Turn demo context off' : 'Turn demo context on'}
           >
-            <span>{demoEnabled ? '🧪' : '📅'}</span>
-            <span>{demoEnabled ? 'Demo Context On' : 'Demo Context Off'}</span>
+            <span
+              className={`inline-block h-7 w-7 transform rounded-full bg-white transition-transform ${
+                demoEnabled ? 'translate-x-8' : 'translate-x-1'
+              }`}
+            />
           </button>
 
           <button
             onClick={() => setShowNewsSummaryModal(true)}
-            className="flex items-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-900 px-4 py-2.5 text-white font-semibold text-sm shadow-md transition-colors"
+            className="flex items-center gap-2 rounded-xl bg-[#e9e0cf] hover:bg-[#dccca9] px-4 py-2.5 text-[#181511] font-semibold text-sm shadow-md transition-colors"
           >
-            <span>📰</span>
             <span>Get AI Summarized News</span>
           </button>
-
-          {/* Report Hazard */}
-          <Link
-            to="/report-blockage"
-            className="flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 px-4 py-2.5 text-white font-semibold text-sm shadow-md transition-colors"
-          >
-            <span>⚠️</span>
-            <span>Report Hazard</span>
-          </Link>
-
-          {/* Messages */}
-          <button
-            onClick={() => navigate('/messages')}
-            className="relative flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-gray-800 shadow-md transition-shadow hover:shadow-lg border border-gray-100"
-          >
-            <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <span className="font-semibold text-sm">Messages</span>
-            {unreadCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            )}
-          </button>
         </div>
-      </div>
-
-      {/* Emergency Ride SOS Banner */}
-      <div className="mb-8 rounded-2xl bg-gradient-to-r from-red-600 to-red-700 p-6 text-white shadow-xl flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold mb-1">🚨 Need an Emergency Ride?</h2>
-          <p className="text-red-100 text-sm">Request a ride to the hospital or anywhere — volunteers will respond immediately</p>
-        </div>
-        <button
-          onClick={() => setShowRideModal(true)}
-          className="flex-shrink-0 ml-4 bg-white text-red-600 font-bold px-6 py-3 rounded-xl hover:bg-red-50 transition-colors shadow-md text-sm"
-        >
-          Request Ride →
-        </button>
       </div>
 
       {/* Main Action Buttons */}
@@ -142,9 +88,9 @@ const Dashboard = () => {
         {/* I Can Help Button */}
         <button
           onClick={() => navigate('/volunteer')}
-          className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500 to-green-600 p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+          className="relative rounded-2xl bg-[#8BA18E] p-8 text-[#181511] shadow-xl transition-colors"
         >
-          <div className="relative z-10">
+          <div>
             <div className="mb-4">
               <svg
                 className="w-20 h-20 mx-auto"
@@ -161,19 +107,18 @@ const Dashboard = () => {
               </svg>
             </div>
             <h2 className="text-3xl font-bold mb-3">I Can Help</h2>
-            <p className="text-green-100 text-lg">
-              Offer resources, help, or services to those in need
+            <p className="text-[#233229] text-lg">
+              Share community support, resources, or services
             </p>
           </div>
-          <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-green-500 transform scale-0 group-hover:scale-100 transition-transform duration-300"></div>
         </button>
 
         {/* I Need Help Button */}
         <button
           onClick={() => navigate('/need-help')}
-          className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-8 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+          className="relative rounded-2xl bg-[#B3C9CD] p-8 text-[#181511] shadow-xl transition-colors"
         >
-          <div className="relative z-10">
+          <div>
             <div className="mb-4">
               <svg
                 className="w-20 h-20 mx-auto"
@@ -190,18 +135,17 @@ const Dashboard = () => {
               </svg>
             </div>
             <h2 className="text-3xl font-bold mb-3">I Need Help</h2>
-            <p className="text-blue-100 text-lg">
+            <p className="text-[#314246] text-lg">
               Request resources, assistance, or support from the community
             </p>
           </div>
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-blue-500 transform scale-0 group-hover:scale-100 transition-transform duration-300"></div>
         </button>
       </div>
 
 
 
       <div className="max-w-4xl mx-auto mb-12">
-        <TrustSummary summary={trustSummary} title="Your Impact" />
+        <TrustSummary summary={trustSummary} title="Your Impact" variant="dashboard" />
       </div> 
 
       {/* Crisis Map */}
@@ -214,7 +158,7 @@ const Dashboard = () => {
               {demoEnabled ? ` · Weather window ${demoRange.startDate} to ${demoRange.endDate}` : ''}
             </p>
           </div>
-          <Link to="/report-blockage" className="btn-secondary text-sm py-2 px-4">
+          <Link to="/report-blockage" className="rounded-lg bg-[#e9e0cf] px-4 py-2 text-sm font-semibold text-[#181511] transition-colors hover:bg-[#dccca9]">
             View All Hazards →
           </Link>
         </div>
@@ -237,14 +181,13 @@ const Dashboard = () => {
             <span className="inline-block w-3 h-3 rounded-full bg-green-600"></span> Low hazard
           </span>
           <span className="flex items-center gap-1.5">
-            🏥 Hospital
+            <span>🏥</span> Hospital
           </span>
           <span className="flex items-center gap-1.5">
-            🩺 Urgent Care / Clinic
+            <span>🩺</span> Urgent Care / Clinic
           </span>
         </div>
       </div>
-      <EmergencyRideModal isOpen={showRideModal} onClose={() => setShowRideModal(false)} />
       <NewsSummaryModal
         key={demoEnabled ? 'historical-context' : 'current-context'}
         isOpen={showNewsSummaryModal}

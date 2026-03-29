@@ -77,9 +77,9 @@ const AddressField = ({ label, hook, placeholder }) => (
 );
 
 const URGENCY_OPTIONS = [
-  { value: 'emergency', label: '🚨 Emergency', desc: 'Life-threatening — hospital run, critical care', color: 'border-red-500 bg-red-50 text-red-700' },
-  { value: 'urgent',    label: '⚡ Urgent',    desc: 'Needed soon — medical appointment, pharmacy', color: 'border-orange-400 bg-orange-50 text-orange-700' },
-  { value: 'normal',    label: '🚗 Normal',    desc: 'Flexible timing — errand, store run',          color: 'border-blue-400 bg-blue-50 text-blue-700' },
+  { value: 'emergency', label: 'Emergency', desc: 'Life-threatening — hospital run, critical care', color: 'border-red-500 bg-red-50 text-red-700' },
+  { value: 'urgent',    label: 'Urgent',    desc: 'Needed soon — medical appointment, pharmacy', color: 'border-orange-400 bg-orange-50 text-orange-700' },
+  { value: 'normal',    label: 'Normal',    desc: 'Flexible timing — errand, store run',          color: 'border-blue-400 bg-blue-50 text-blue-700' },
 ];
 
 const EmergencyRideModal = ({ isOpen, onClose }) => {
@@ -112,7 +112,7 @@ const EmergencyRideModal = ({ isOpen, onClose }) => {
       onClose();
       navigate(`/rides/${response.data.ride_request_id}`);
     } catch (err) {
-      setError(err.message || 'Failed to create ride request.');
+      setError(err.message || 'Failed to create support ride request.');
     } finally {
       setSubmitting(false);
     }
@@ -125,8 +125,8 @@ const EmergencyRideModal = ({ isOpen, onClose }) => {
       <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Request a Ride</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Volunteers nearby will be notified immediately</p>
+            <h2 className="text-2xl font-bold text-gray-900">Request a Community Support Ride</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Nearby Commodores will be notified immediately</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,8 +157,8 @@ const EmergencyRideModal = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          <AddressField label="📍 Pickup Location" hook={pickup} placeholder="Where do you need to be picked up?" />
-          <AddressField label="🏁 Destination" hook={destination} placeholder="Where do you need to go?" />
+          <AddressField label="Pickup Location" hook={pickup} placeholder="Where do you need to be picked up?" />
+          <AddressField label="Destination" hook={destination} placeholder="Where do you need to go?" />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
@@ -178,7 +178,7 @@ const EmergencyRideModal = ({ isOpen, onClose }) => {
             </button>
             <button type="submit" disabled={submitting}
               className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold disabled:opacity-50">
-              {submitting ? 'Sending...' : '🚨 Request Ride'}
+              {submitting ? 'Sending...' : 'Request Support Ride'}
             </button>
           </div>
         </form>

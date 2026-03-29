@@ -1,30 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Antonio:wght@400;500;700&family=Inter:wght@400;500;600;700;800&family=Libre+Caslon+Text:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Custom base styles */
 @layer base {
+  :root {
+    color: #181511;
+    background: #f8f4ec;
+  }
+
+  html {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-[#f8f4ec] text-[#181511];
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Libre Caslon Text', Georgia, serif;
+    letter-spacing: -0.01em;
+    color: #181511;
+  }
+
+  h5, h6 {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   }
 }
 
 /* Custom component styles */
 @layer components {
   .btn-primary {
-    @apply py-3 px-6 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed;
+    @apply py-3 px-6 bg-[#181511] text-[#f8f4ec] font-semibold rounded-lg hover:bg-[#2a261f] transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply py-3 px-6 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors duration-200;
+    @apply py-3 px-6 bg-[#e9e0cf] text-[#181511] font-semibold rounded-lg hover:bg-[#dccca9] transition-colors duration-200;
   }
 
   .input-field {
-    @apply w-full p-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply w-full p-3 text-base border border-[#c9baa3] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#a1842f] focus:border-transparent;
   }
 
   .card {
-    @apply bg-white rounded-lg shadow-md p-6;
+    @apply bg-white rounded-2xl shadow-md p-6 border border-[#e7dccb];
   }
 
   .badge {
@@ -52,5 +73,17 @@
 @layer utilities {
   .container-custom {
     @apply container mx-auto px-4 py-6;
+  }
+
+  .page-shell {
+    @apply rounded-[2rem] border shadow-sm;
+  }
+
+  .page-help-theme {
+    @apply bg-[linear-gradient(180deg,rgba(117,154,144,0.18),rgba(248,244,236,0.95))] border-[#9bb7b0];
+  }
+
+  .page-need-theme {
+    @apply bg-[linear-gradient(180deg,rgba(125,174,211,0.18),rgba(248,244,236,0.95))] border-[#a9c4db];
   }
 }

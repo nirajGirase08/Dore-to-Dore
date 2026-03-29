@@ -266,10 +266,11 @@ const VolunteerPage = () => {
 
   return (
     <div className="container-custom py-8">
+      <div className="page-shell page-help-theme p-6 md:p-8">
       {/* Header */}
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">I Can Help</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">I Can Help</h1>
           <p className="text-gray-600">
             Share your resources and help community members in need
           </p>
@@ -278,7 +279,7 @@ const VolunteerPage = () => {
         {/* Messages Button with Badge */}
         <button
           onClick={() => navigate('/messages')}
-          className="relative flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md"
+          className="relative flex items-center space-x-2 px-4 py-2 bg-[#181511] text-[#f8f4ec] rounded-lg hover:bg-[#2a261f] transition-colors shadow-md"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -382,8 +383,8 @@ const VolunteerPage = () => {
             />
             <p className="text-xs text-gray-500 mt-2 flex items-center gap-3">
               <span className="inline-flex items-center gap-1"><span style={{color:'#3b82f6',fontWeight:700}}>▲</span> Person in need</span>
-              <span>📍 Your location</span>
-              <span className="text-blue-400">— — Radius boundary</span>
+              <span>Your location</span>
+              <span className="text-[#7daed3]">Radius boundary</span>
             </p>
           </div>
         );
@@ -396,45 +397,45 @@ const VolunteerPage = () => {
             setAiDraftOffer(null);
             setShowCreateModal(true);
           }}
-          className="card hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200"
+          className="card hover:shadow-lg transition-shadow bg-[linear-gradient(135deg,rgba(117,154,144,0.18),rgba(248,244,236,0.95))] border-2 border-[#9bb7b0]"
         >
           <div className="flex items-center space-x-4">
-            <div className="bg-green-500 text-white p-4 rounded-full">
+            <div className="bg-[#759a90] text-white p-4 rounded-full">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </div>
             <div className="text-left">
-              <h3 className="text-xl font-semibold text-gray-800">Create New Offer</h3>
-              <p className="text-sm text-gray-600">Share what you can provide</p>
+              <h3 className="text-xl font-semibold text-gray-800">Add Support You Can Provide</h3>
+              <p className="text-sm text-gray-600">Share the help and resources you can contribute</p>
             </div>
           </div>
         </button>
 
         <button
           onClick={() => setShowAISuggestionModal(true)}
-          className="card hover:shadow-lg transition-shadow bg-gradient-to-br from-cyan-50 to-cyan-100 border-2 border-cyan-200"
+          className="card hover:shadow-lg transition-colors bg-[#e9e0cf] border-2 border-[#dccca9] hover:bg-[#dccca9]"
         >
           <div className="flex items-center space-x-4">
-            <div className="bg-cyan-500 text-white p-4 rounded-full">
+            <div className="bg-[#181511] text-[#e9e0cf] p-4 rounded-full">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6l4 2m4-2a8 8 0 11-16 0 8 8 0 0116 0zm-8-8v2m0 12v2m8-8h-2M6 12H4" />
               </svg>
             </div>
             <div className="text-left">
               <h3 className="text-xl font-semibold text-gray-800">Get AI Generated Suggestions</h3>
-              <p className="text-sm text-gray-600">Use nearby conditions and your history to draft an offer</p>
+              <p className="text-sm text-gray-600">Use nearby conditions and your history to draft community support</p>
             </div>
           </div>
         </button>
       </div>
 
-      {/* My Offers Section */}
+      {/* My Support Contributions Section */}
       {(!globalSearch || filteredMyOffers.length > 0 || myOffers.length === 0) && (
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-gray-800">
-            My Offers
+            My Support Contributions
             {globalSearch && <span className="ml-2 text-base font-normal text-gray-500">({filteredMyOffers.length})</span>}
           </h2>
           <button
@@ -456,16 +457,16 @@ const VolunteerPage = () => {
                       d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                     />
                   </svg>
-                  <p className="text-gray-600 mb-4">You haven't created any offers yet</p>
+                  <p className="text-gray-600 mb-4">You haven't shared any support yet</p>
                   <button onClick={() => setShowCreateModal(true)} className="btn-primary">
-                    Create Your First Offer
+                    Add Your First Support Listing
                   </button>
                 </div>
               </div>
             ) : filteredMyOffers.length === 0 ? (
               <div className="card bg-gray-50 border-2 border-dashed border-gray-300">
                 <div className="text-center py-8">
-                  <p className="text-gray-500">No offers match your search</p>
+                  <p className="text-gray-500">No support contributions match your search</p>
                 </div>
               </div>
             ) : (
@@ -473,7 +474,7 @@ const VolunteerPage = () => {
                 {filteredActiveOffers.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
-                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2">Active</span>
+                      <span className="bg-[#d8ebe6] text-[#335a50] px-3 py-1 rounded-full text-sm mr-2">Active</span>
                       <span className="text-gray-500">({filteredActiveOffers.length})</span>
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -647,6 +648,7 @@ const VolunteerPage = () => {
         onClose={() => setShowAISuggestionModal(false)}
         onApply={handleApplyAISuggestion}
       />
+      </div>
     </div>
   );
 };

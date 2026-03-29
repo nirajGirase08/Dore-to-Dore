@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { conversationsAPI, requestsAPI, trustAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { RESOURCE_ICONS } from '../constants/marketplace';
 import TrustSummary from '../components/shared/TrustSummary';
 
 const RequestDetailPage = () => {
@@ -77,7 +76,7 @@ const RequestDetailPage = () => {
           <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{request.title}</h1>
-              <p className="mt-2 text-sm text-gray-500">📍 {request.location_address}</p>
+              <p className="mt-2 text-sm text-gray-500">Location: {request.location_address}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <span className="rounded-full bg-orange-100 px-3 py-1 text-sm font-semibold text-orange-800 capitalize">
@@ -99,7 +98,6 @@ const RequestDetailPage = () => {
               {request.items?.map((item) => (
                 <div key={item.item_id} className="rounded-xl border border-gray-200 p-4">
                   <div className="flex items-start gap-3">
-                    <span className="text-xl">{RESOURCE_ICONS[item.resource_type] || '📦'}</span>
                     <div>
                       <h3 className="text-lg font-semibold capitalize text-gray-900">
                         {item.resource_type.replaceAll('_', ' ')}
@@ -146,7 +144,7 @@ const RequestDetailPage = () => {
           </div>
 
           <div className="mt-6">
-            <TrustSummary summary={trustSummary} title="Requester Trust" />
+            <TrustSummary summary={trustSummary} title="Requester Trust" variant="dashboard" />
           </div>
 
           {request.user_id !== user?.user_id && (

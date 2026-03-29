@@ -54,6 +54,14 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+echo "Applying rides support migration..."
+psql -U "$DB_USER" -d "$DB_NAME" -f migrations/008_rides_support.sql
+
+if [ $? -ne 0 ]; then
+  echo "✗ Rides migration failed. Please check the error messages above."
+  exit 1
+fi
+
 echo "Applying blockage schema updates..."
 psql -U "$DB_USER" -d "$DB_NAME" <<'SQL'
 ALTER TABLE blockages ADD COLUMN IF NOT EXISTS authority_notified BOOLEAN DEFAULT false;

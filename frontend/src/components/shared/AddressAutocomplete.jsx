@@ -130,7 +130,7 @@ const AddressAutocomplete = ({
         disabled={geoLoading}
         className="btn-secondary text-sm py-1.5 px-3 mb-2"
       >
-        {geoLoading ? 'Getting location…' : '📍 Use Current Location'}
+        {geoLoading ? 'Getting location…' : 'Use Current Location'}
       </button>
 
       {hasCoords && (

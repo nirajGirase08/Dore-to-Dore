@@ -158,10 +158,10 @@ const startServer = async () => {
     // Start the server
     app.listen(PORT, () => {
       console.log('===========================================');
-      console.log(`🚀 Crisis Connect Backend Server Running`);
-      console.log(`📡 Port: ${PORT}`);
-      console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-      console.log(`🗄️  Database: ${dbConnected ? 'Connected ✓' : 'Not Connected ✗'}`);
+      console.log(`Crisis Connect Backend Server Running`);
+      console.log(`Port: ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV}`);
+      console.log(`Database: ${dbConnected ? 'Connected' : 'Not Connected'}`);
       console.log('===========================================');
     });
   } catch (error) {

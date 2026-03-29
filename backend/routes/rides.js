@@ -17,14 +17,14 @@ const broadcastRideNotification = async (rideRequest, requesterName) => {
       attributes: ['user_id'],
     });
 
-    const urgencyLabel = rideRequest.urgency === 'emergency' ? '🚨 EMERGENCY' :
-                         rideRequest.urgency === 'urgent'    ? '⚡ Urgent'    : 'Ride';
+    const urgencyLabel = rideRequest.urgency === 'emergency' ? 'Emergency' :
+                         rideRequest.urgency === 'urgent'    ? 'Urgent'    : 'Ride';
 
     await Notification.bulkCreate(
       allUsers.map((u) => ({
         user_id:           u.user_id,
         notification_type: 'ride_request',
-        title:             `${urgencyLabel} Ride Needed`,
+        title:             `${urgencyLabel} Support Ride Needed`,
         message:           `${requesterName} needs a ride from ${rideRequest.pickup_address || 'their location'} to ${rideRequest.destination_address || 'their destination'}.`,
         related_id:        rideRequest.ride_request_id,
         severity:          rideRequest.urgency === 'emergency' ? 'critical' : 'high',
@@ -64,11 +64,11 @@ router.post('/', authenticate, async (req, res) => {
     res.status(201).json({ success: true, data: ride });
   } catch (err) {
     console.error('Create ride error:', err);
-    res.status(500).json({ success: false, error: 'Failed to create ride request.' });
+    res.status(500).json({ success: false, error: 'Failed to create support ride request.' });
   }
 });
 
-// GET /api/rides/available — pending rides for volunteers
+// GET /api/rides/available — pending support rides for helpers
 router.get('/available', authenticate, async (req, res) => {
   try {
     const rides = await RideRequest.findAll({
@@ -82,11 +82,11 @@ router.get('/available', authenticate, async (req, res) => {
     res.json({ success: true, data: rides });
   } catch (err) {
     console.error('Get available rides error:', err);
-    res.status(500).json({ success: false, error: 'Failed to fetch available rides.' });
+    res.status(500).json({ success: false, error: 'Failed to fetch available support rides.' });
   }
 });
 
-// GET /api/rides/my — requester's own rides
+// GET /api/rides/my — requester's own support rides
 router.get('/my', authenticate, async (req, res) => {
   try {
     const rides = await RideRequest.findAll({
@@ -97,11 +97,11 @@ router.get('/my', authenticate, async (req, res) => {
     res.json({ success: true, data: rides });
   } catch (err) {
     console.error('Get my rides error:', err);
-    res.status(500).json({ success: false, error: 'Failed to fetch your rides.' });
+    res.status(500).json({ success: false, error: 'Failed to fetch your support rides.' });
   }
 });
 
-// GET /api/rides/driving — rides the current user is driving
+// GET /api/rides/driving — support rides the current user is handling
 router.get('/driving', authenticate, async (req, res) => {
   try {
     const rides = await RideRequest.findAll({
@@ -115,7 +115,7 @@ router.get('/driving', authenticate, async (req, res) => {
     res.json({ success: true, data: rides });
   } catch (err) {
     console.error('Get driving rides error:', err);
-    res.status(500).json({ success: false, error: 'Failed to fetch driving rides.' });
+    res.status(500).json({ success: false, error: 'Failed to fetch your active support rides.' });
   }
 });
 
@@ -157,14 +157,14 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
-// PATCH /api/rides/:id/accept — volunteer accepts
+// PATCH /api/rides/:id/accept — helper accepts
 router.patch('/:id/accept', authenticate, async (req, res) => {
   try {
     const ride = await RideRequest.findByPk(req.params.id);
 
     if (!ride) return res.status(404).json({ success: false, error: 'Ride not found.' });
     if (ride.status !== 'pending') return res.status(400).json({ success: false, error: 'Ride is no longer available.' });
-    if (ride.requester_id === req.userId) return res.status(400).json({ success: false, error: 'You cannot accept your own ride request.' });
+    if (ride.requester_id === req.userId) return res.status(400).json({ success: false, error: 'You cannot accept your own support ride request.' });
 
     await ride.update({ driver_id: req.userId, status: 'accepted', accepted_at: new Date(), updated_at: new Date() });
 
@@ -173,8 +173,8 @@ router.patch('/:id/accept', authenticate, async (req, res) => {
     await Notification.create({
       user_id:           ride.requester_id,
       notification_type: 'ride_accepted',
-      title:             'Your ride was accepted!',
-      message:           `${driver?.name || 'A volunteer'} accepted your ride request and is on the way.`,
+      title:             'Your support ride was accepted',
+      message:           `${driver?.name || 'A Commodore'} accepted your support ride request and is on the way.`,
       related_id:        ride.ride_request_id,
       severity:          'high',
     });
@@ -189,7 +189,7 @@ router.patch('/:id/accept', authenticate, async (req, res) => {
     res.json({ success: true, data: updatedRide });
   } catch (err) {
     console.error('Accept ride error:', err);
-    res.status(500).json({ success: false, error: 'Failed to accept ride.' });
+    res.status(500).json({ success: false, error: 'Failed to accept support ride.' });
   }
 });
 
@@ -201,7 +201,7 @@ router.patch('/:id/status', authenticate, async (req, res) => {
 
     if (!ride) return res.status(404).json({ success: false, error: 'Ride not found.' });
 
-    // Only driver or requester can update (driver for en_route/picked_up, requester for cancel)
+    // Only helper or requester can update
     const isDriver    = ride.driver_id === req.userId;
     const isRequester = ride.requester_id === req.userId;
 
@@ -218,10 +218,10 @@ router.patch('/:id/status', authenticate, async (req, res) => {
     const notifyUserId = isDriver ? ride.requester_id : ride.driver_id;
     if (notifyUserId) {
       const statusMessages = {
-        en_route:  { title: 'Driver is on the way',      msg: 'Your driver is heading to your pickup location.' },
+        en_route:  { title: 'Commodore is on the way',      msg: 'Your Commodore is heading to your pickup location.' },
         picked_up: { title: 'You\'ve been picked up',    msg: 'You are now en route to your destination.' },
-        completed: { title: 'Ride completed',             msg: 'Your ride has been completed. Thank you!' },
-        cancelled: { title: 'Ride cancelled',             msg: 'The ride request has been cancelled.' },
+        completed: { title: 'Support ride completed',             msg: 'Your support ride has been completed. Thank you!' },
+        cancelled: { title: 'Support ride cancelled',             msg: 'The support ride request has been cancelled.' },
       };
       const notif = statusMessages[status];
       if (notif) {
@@ -239,7 +239,7 @@ router.patch('/:id/status', authenticate, async (req, res) => {
     res.json({ success: true, data: ride });
   } catch (err) {
     console.error('Update ride status error:', err);
-    res.status(500).json({ success: false, error: 'Failed to update ride status.' });
+    res.status(500).json({ success: false, error: 'Failed to update support ride status.' });
   }
 });
 

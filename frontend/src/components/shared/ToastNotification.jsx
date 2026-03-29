@@ -10,17 +10,6 @@ const formatTimeAgo = (dateStr) => {
   return `${hours}h ago`;
 };
 
-const TYPE_ICONS = {
-  accident:     '🚨',
-  tree_down:    '🌳',
-  flooding:     '🌊',
-  ice:          '🧊',
-  power_line:   '⚡',
-  debris:       '🪨',
-  road_closure: '🚧',
-  other:        '⚠️',
-};
-
 const SEVERITY_COLORS = {
   low:    'border-l-green-400',
   medium: 'border-l-yellow-400',
@@ -33,11 +22,8 @@ const Toast = ({ toast, onDismiss }) => {
     return () => clearTimeout(timer);
   }, [toast.toastId, onDismiss]);
 
-  // Extract blockage type from title (e.g. "🚧 Nearby Blockage: road closure")
-  const typeKey = toast.title?.toLowerCase().replace(/.*: /, '').replace(/ /g, '_');
-  const icon = toast.notification_type === 'weather_alert'
-    ? '🌩️'
-    : TYPE_ICONS[typeKey] || '🚧';
+  // Extract blockage type from title (e.g. "Nearby Blockage: road closure")
+  toast.title?.toLowerCase().replace(/.*: /, '').replace(/ /g, '_');
   const borderColor = toast.notification_type === 'weather_alert'
     ? 'border-l-blue-500'
     : SEVERITY_COLORS[toast.severity] || 'border-l-orange-400';
@@ -46,7 +32,7 @@ const Toast = ({ toast, onDismiss }) => {
     <div
       className={`bg-white shadow-xl rounded-lg border border-gray-200 border-l-4 ${borderColor} p-4 w-80 flex items-start gap-3 animate-slide-in`}
     >
-      <span className="text-2xl flex-shrink-0">{icon}</span>
+      <span className="mt-1 h-3 w-3 flex-shrink-0 rounded-full bg-[#a1842f]"></span>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-gray-800 text-sm leading-snug">{toast.title}</p>
         {toast.message && (

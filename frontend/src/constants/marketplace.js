@@ -12,19 +12,7 @@ export const RESOURCE_TYPES = [
   { value: 'wifi_access', label: 'WiFi Access' },
 ];
 
-export const RESOURCE_ICONS = {
-  food: '🍲',
-  water: '💧',
-  shelter: '🏠',
-  blankets: '🛏️',
-  clothes: '👕',
-  medical: '💊',
-  transport: '🚗',
-  power: '🔋',
-  baby_care: '🍼',
-  female_hygiene_products: '🩹',
-  wifi_access: '📶',
-};
+export const RESOURCE_ICONS = {};
 
 export const TARGET_GENDER_OPTIONS = [
   { value: '', label: 'Everyone' },

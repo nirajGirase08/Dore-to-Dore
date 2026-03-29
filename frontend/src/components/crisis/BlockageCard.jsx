@@ -10,14 +10,14 @@ const SEVERITY_STYLES = {
 };
 
 const TYPE_ICONS = {
-  accident: '🚨',
-  tree_down: '🌳',
-  flooding: '🌊',
-  ice: '🧊',
-  power_line: '⚡',
-  debris: '🪨',
-  road_closure: '🚧',
-  other: '⚠️',
+  accident: 'Accident',
+  tree_down: 'Tree',
+  flooding: 'Flood',
+  ice: 'Ice',
+  power_line: 'Power',
+  debris: 'Debris',
+  road_closure: 'Closure',
+  other: 'Hazard',
 };
 
 const formatTimeAgo = (dateStr) => {
@@ -54,7 +54,7 @@ const BlockageCard = ({ blockage, onUpdate }) => {
         {/* Header row */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">{TYPE_ICONS[blockage.blockage_type] || '⚠️'}</span>
+            <span className="inline-flex min-w-16 justify-center rounded-full bg-[#f0e8da] px-2 py-1 text-xs font-semibold text-[#6c5b20]">{TYPE_ICONS[blockage.blockage_type] || 'Hazard'}</span>
             <div>
               <p className="font-semibold text-gray-800 capitalize">
                 {blockage.blockage_type?.replace(/_/g, ' ')}
@@ -72,7 +72,7 @@ const BlockageCard = ({ blockage, onUpdate }) => {
         {/* Location */}
         {blockage.location_address && (
           <p className="text-sm text-gray-600 flex items-center gap-1">
-            <span>📍</span> {blockage.location_address}
+            <span>Location:</span> {blockage.location_address}
           </p>
         )}
 
@@ -112,7 +112,7 @@ const BlockageCard = ({ blockage, onUpdate }) => {
             </span>
           )}
           {blockage.photo_url && (
-            <span className="text-xs text-blue-500 ml-auto">📷 Photo</span>
+            <span className="text-xs text-blue-500 ml-auto">Photo</span>
           )}
         </div>
 
@@ -140,7 +140,7 @@ const BlockageCard = ({ blockage, onUpdate }) => {
             {/* Modal header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <span className="text-3xl">{TYPE_ICONS[blockage.blockage_type] || '⚠️'}</span>
+                <span className="inline-flex min-w-20 justify-center rounded-full bg-[#f0e8da] px-2 py-1 text-xs font-semibold text-[#6c5b20]">{TYPE_ICONS[blockage.blockage_type] || 'Hazard'}</span>
                 <div>
                   <h2 className="text-lg font-bold text-gray-800 capitalize">
                     {blockage.blockage_type?.replace(/_/g, ' ')}
@@ -175,9 +175,7 @@ const BlockageCard = ({ blockage, onUpdate }) => {
               {blockage.location_address && (
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Location</p>
-                  <p className="text-sm text-gray-700 flex items-start gap-1">
-                    <span>📍</span> {blockage.location_address}
-                  </p>
+                  <p className="text-sm text-gray-700">{blockage.location_address}</p>
                 </div>
               )}
 

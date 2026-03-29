@@ -1,6 +1,4 @@
 import React from 'react';
-import { RESOURCE_ICONS } from '../../constants/marketplace';
-
 const OfferCard = ({ offer, showContact = true, onContact, onEdit, onFulfillItem, onView, matchScore, matchDistanceKm }) => {
   return (
     <div
@@ -22,7 +20,6 @@ const OfferCard = ({ offer, showContact = true, onContact, onEdit, onFulfillItem
             matchScore >= 50 ? 'bg-yellow-100 text-yellow-800' :
             'bg-gray-100 text-gray-800'
           }`}>
-            {matchScore >= 80 && '🎯 '}
             {matchScore}% Match
           </div>
         </div>
@@ -42,7 +39,7 @@ const OfferCard = ({ offer, showContact = true, onContact, onEdit, onFulfillItem
           </span>
         </div>
         {offer.delivery_available && (
-          <span className="badge badge-success text-xs ml-2">🚚 Delivery</span>
+          <span className="badge badge-success text-xs ml-2">Delivery Available</span>
         )}
       </div>
 
@@ -68,7 +65,6 @@ const OfferCard = ({ offer, showContact = true, onContact, onEdit, onFulfillItem
                   ) : null}
                   <div>
                     <span>
-                      <span className="mr-2">{RESOURCE_ICONS[item.resource_type] || '📦'}</span>
                       <span className="capitalize">{item.resource_type}</span>
                       {item.notes && <span className="text-gray-500 text-xs ml-1">({item.notes})</span>}
                     </span>
@@ -88,7 +84,7 @@ const OfferCard = ({ offer, showContact = true, onContact, onEdit, onFulfillItem
                     event.stopPropagation();
                     onFulfillItem(offer, item);
                   }}
-                  className="px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-700 transition-colors"
+                  className="px-3 py-1 bg-[#8BA18E] text-white text-xs font-semibold rounded-lg hover:bg-[#748a77] transition-colors"
                 >
                   Fulfill Item
                 </button>
@@ -104,7 +100,7 @@ const OfferCard = ({ offer, showContact = true, onContact, onEdit, onFulfillItem
           <div>
             <p className="font-medium text-gray-700">{offer.user?.name || 'Helper'}</p>
             <p className="text-xs text-gray-500">
-              📍 {offer.location_address}
+              Location: {offer.location_address}
             </p>
             {offer.user?.reputation_score > 0 && (
               <p className="text-xs text-yellow-600">
@@ -124,7 +120,7 @@ const OfferCard = ({ offer, showContact = true, onContact, onEdit, onFulfillItem
                   event.stopPropagation();
                   onContact(offer);
                 }}
-                className="px-4 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                className="px-4 py-2 bg-[#759a90] text-white text-sm font-semibold rounded-lg hover:bg-[#64887f] transition-colors"
               >
                 Contact
               </button>
@@ -137,7 +133,7 @@ const OfferCard = ({ offer, showContact = true, onContact, onEdit, onFulfillItem
                       event.stopPropagation();
                       onEdit(offer);
                     }}
-                    className="px-3 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-3 py-2 bg-[#7c6248] text-white text-sm font-semibold rounded-lg hover:bg-[#654f39] transition-colors"
                   >
                     Edit
                   </button>
