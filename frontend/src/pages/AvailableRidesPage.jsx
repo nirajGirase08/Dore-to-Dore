@@ -259,7 +259,7 @@ const AvailableRidesPage = () => {
                       )}
                     </div>
 
-                    {/* Accept button */}
+                    {/* Action buttons */}
                     <div className="flex-shrink-0 flex flex-col gap-2">
                       <button
                         onClick={() => handleAccept(ride.ride_request_id)}
@@ -272,13 +272,13 @@ const AvailableRidesPage = () => {
                             : 'bg-blue-600 hover:bg-blue-700'
                         }`}
                       >
-                        {accepting === ride.ride_request_id ? '...' : 'Accept'}
+                        {accepting === ride.ride_request_id ? '...' : 'Sure'}
                       </button>
                       <button
-                        onClick={() => navigate(`/rides/${ride.ride_request_id}`)}
-                        className="px-5 py-2 rounded-xl text-sm text-gray-600 border border-gray-300 hover:bg-gray-50"
+                        disabled
+                        className="px-5 py-2 rounded-xl text-sm text-gray-400 border border-gray-200 bg-gray-50 cursor-not-allowed"
                       >
-                        Details
+                        Sorry not available
                       </button>
                     </div>
                   </div>

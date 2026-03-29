@@ -191,6 +191,8 @@ router.put('/profile', authenticate, async (req, res) => {
       email,
       phone,
       location_address,
+      location_lat,
+      location_lng,
     } = req.body;
 
     if (!name || !email) {
@@ -217,6 +219,8 @@ router.put('/profile', authenticate, async (req, res) => {
       email: normalizedEmail,
       phone: phone?.trim() || null,
       location_address: location_address?.trim() || null,
+      location_lat:  location_lat  != null ? parseFloat(location_lat)  : null,
+      location_lng:  location_lng  != null ? parseFloat(location_lng)  : null,
     });
 
     res.json({

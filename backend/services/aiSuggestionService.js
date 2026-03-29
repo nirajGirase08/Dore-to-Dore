@@ -26,7 +26,7 @@ Return valid JSON only. No markdown.
 Be concrete, realistic, and concise.
 Use the provided context: user history, nearby conditions, weather window, blockages, and nearby places.
 If the weather context is forward-looking, make proactive suggestions.
-When the weather context includes freezing, ice, snow, heavy precipitation, or strong disruption indicators, do not return "low" urgency.
+Only describe weather conditions that are actually present in the context data values. Do not invent or assume weather conditions that are not reflected in the data.
 Never invent unsafe claims.
 JSON schema:
 {

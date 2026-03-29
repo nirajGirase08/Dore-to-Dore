@@ -115,39 +115,60 @@ const MessagesPage = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {conversations.map((conversation) => (
-                <div
-                  key={conversation.conversation_id}
-                  onClick={() => handleSelectConversation(conversation)}
-                  className={`p-4 rounded-lg cursor-pointer transition-colors ${
-                    selectedConversation?.conversation_id === conversation.conversation_id
-                      ? 'bg-blue-50 border-2 border-blue-200'
-                      : 'hover:bg-gray-50 border-2 border-transparent'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-1">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-800 truncate">
-                        {conversation.other_user?.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 capitalize">
-                        {conversation.other_user?.user_type}
-                      </p>
+              {conversations.map((conversation) => {
+                const isSelected = selectedConversation?.conversation_id === conversation.conversation_id;
+                const hasUnread =
+                  conversation.last_message?.is_read === false &&
+                  conversation.last_message?.sender_id !== user?.user_id;
+
+                return (
+                  <div
+                    key={conversation.conversation_id}
+                    onClick={() => handleSelectConversation(conversation)}
+                    className={`p-4 rounded-lg cursor-pointer transition-colors border-2 ${
+                      isSelected
+                        ? 'bg-blue-50 border-blue-200'
+                        : hasUnread
+                        ? 'bg-blue-50 border-blue-300 hover:bg-blue-100'
+                        : 'hover:bg-gray-50 border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                        {hasUnread && !isSelected && (
+                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-500" />
+                        )}
+                        <div className="min-w-0">
+                          <h3 className={`truncate ${hasUnread && !isSelected ? 'font-bold text-gray-900' : 'font-semibold text-gray-800'}`}>
+                            {conversation.other_user?.name}
+                          </h3>
+                          <p className="text-xs text-gray-500 capitalize">
+                            {conversation.other_user?.user_type}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end ml-2 flex-shrink-0 gap-1">
+                        {conversation.last_message_at && (
+                          <span className={`text-xs ${hasUnread && !isSelected ? 'text-blue-600 font-semibold' : 'text-gray-500'}`}>
+                            {formatMessageTime(conversation.last_message_at)}
+                          </span>
+                        )}
+                        {hasUnread && !isSelected && (
+                          <span className="bg-blue-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 leading-none">
+                            New
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    {conversation.last_message_at && (
-                      <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
-                        {formatMessageTime(conversation.last_message_at)}
-                      </span>
+                    {conversation.last_message && (
+                      <p className={`text-sm truncate ${hasUnread && !isSelected ? 'text-gray-800 font-medium' : 'text-gray-600'}`}>
+                        {conversation.last_message.sender_id === user?.user_id && 'You: '}
+                        {conversation.last_message.message_text}
+                      </p>
                     )}
                   </div>
-                  {conversation.last_message && (
-                    <p className="text-sm text-gray-600 truncate">
-                      {conversation.last_message.sender_id === user?.user_id && 'You: '}
-                      {conversation.last_message.message_text}
-                    </p>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authAPI, trustAPI, uploadsAPI } from '../services/api';
@@ -14,6 +14,12 @@ const ProfilePage = () => {
     phone: '',
     location_address: '',
   });
+  const [coords, setCoords] = useState({ lat: null, lng: null });
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const debounceTimer = useRef(null);
+  const addressWrapperRef = useRef(null);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [selectedImageFile, setSelectedImageFile] = useState(null);
@@ -24,19 +30,31 @@ const ProfilePage = () => {
   const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    if (!user) {
-      return;
-    }
-
+    if (!user) return;
     setFormData({
       name: user.name || '',
       email: user.email || '',
       phone: user.phone || '',
       location_address: user.location_address || '',
     });
+    setCoords({
+      lat: user.location_lat ? parseFloat(user.location_lat) : null,
+      lng: user.location_lng ? parseFloat(user.location_lng) : null,
+    });
     setImagePreviewUrl(user.profile_image_url || '');
     setSelectedImageFile(null);
   }, [user]);
+
+  // Close address dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (addressWrapperRef.current && !addressWrapperRef.current.contains(e.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   useEffect(() => {
     const loadTrust = async () => {
@@ -103,6 +121,37 @@ const ProfilePage = () => {
     }
   };
 
+  const handleAddressChange = (e) => {
+    const value = e.target.value;
+    setFormData((f) => ({ ...f, location_address: value }));
+    setCoords({ lat: null, lng: null });
+    clearTimeout(debounceTimer.current);
+    if (value.trim().length < 3) { setSuggestions([]); setShowSuggestions(false); return; }
+    debounceTimer.current = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const NASHVILLE_VIEWBOX = '-87.10,36.40,-86.50,35.96';
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(value)}&format=json&limit=5&countrycodes=us&addressdetails=1&viewbox=${NASHVILLE_VIEWBOX}&bounded=1`
+        );
+        const data = await res.json();
+        setSuggestions(data);
+        setShowSuggestions(data.length > 0);
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 350);
+  };
+
+  const handleSelectSuggestion = (item) => {
+    setFormData((f) => ({ ...f, location_address: item.display_name }));
+    setCoords({ lat: parseFloat(item.lat), lng: parseFloat(item.lon) });
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -110,7 +159,7 @@ const ProfilePage = () => {
     setSuccessMessage('');
 
     try {
-      const response = await authAPI.updateProfile(formData);
+      const response = await authAPI.updateProfile({ ...formData, location_lat: coords.lat, location_lng: coords.lng });
       const updatedUser = response.data?.user;
 
       if (updatedUser) {
@@ -274,15 +323,48 @@ const ProfilePage = () => {
               <label htmlFor="location_address" className="mb-1 block text-sm font-medium text-gray-700">
                 Address
               </label>
-              <textarea
-                id="location_address"
-                name="location_address"
-                rows="3"
-                value={formData.location_address}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="Vanderbilt Dorm, Nashville, TN"
-              />
+              <div className="relative" ref={addressWrapperRef}>
+                <input
+                  id="location_address"
+                  name="location_address"
+                  type="text"
+                  value={formData.location_address}
+                  onChange={handleAddressChange}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  className="input-field"
+                  placeholder="Vanderbilt Dorm, Nashville, TN"
+                  autoComplete="off"
+                />
+                {searchLoading && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Searching…</span>
+                )}
+                {showSuggestions && suggestions.length > 0 && (
+                  <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto">
+                    {suggestions.map((item) => (
+                      <li
+                        key={item.place_id}
+                        onMouseDown={() => handleSelectSuggestion(item)}
+                        className="px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0"
+                      >
+                        <span className="font-medium text-gray-900">
+                          {item.address?.road || item.address?.amenity || item.name || ''}
+                          {(item.address?.road || item.address?.amenity || item.name) ? ', ' : ''}
+                        </span>
+                        <span className="text-gray-500">
+                          {[item.address?.city || item.address?.town || item.address?.village, item.address?.state]
+                            .filter(Boolean).join(', ')}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              {coords.lat && (
+                <p className="text-xs text-green-700 mt-1">✓ Coordinates captured ({coords.lat.toFixed(4)}, {coords.lng.toFixed(4)})</p>
+              )}
+              {!coords.lat && formData.location_address && (
+                <p className="text-xs text-amber-600 mt-1">⚠ Select a suggestion to save GPS coordinates</p>
+            )}
             </div>
 
             <div className="flex justify-end">

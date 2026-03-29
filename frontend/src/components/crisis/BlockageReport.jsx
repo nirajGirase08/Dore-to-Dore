@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createBlockage, uploadBlockageImage } from '../../services/blockageService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BLOCKAGE_TYPES = [
   { value: 'accident', label: 'Accident' },
@@ -20,6 +21,7 @@ const SEVERITIES = [
 ];
 
 const BlockageReport = ({ onSuccess }) => {
+  const { user } = useAuth();
   const [form, setForm] = useState({
     blockage_type: '',
     severity: '',
@@ -53,6 +55,18 @@ const BlockageReport = ({ onSuccess }) => {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  const handleUseHomeAddress = () => {
+    if (!user?.location_lat || !user?.location_lng) {
+      setError('No home address saved in your profile. Please enter the address manually.');
+      return;
+    }
+    setError(null);
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setCoords({ lat: parseFloat(user.location_lat), lng: parseFloat(user.location_lng) });
+    setForm((f) => ({ ...f, location_address: user.location_address || '' }));
+  };
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -237,14 +251,24 @@ const BlockageReport = ({ onSuccess }) => {
       {/* Location */}
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
-        <button
-          type="button"
-          onClick={handleUseCurrentLocation}
-          disabled={geoLoading}
-          className="btn-secondary text-sm py-2 px-4 mb-3"
-        >
-          {geoLoading ? 'Getting location…' : '📍 Use Current Location'}
-        </button>
+        <div className="flex flex-wrap gap-2 mb-3">
+          <button
+            type="button"
+            onClick={handleUseCurrentLocation}
+            disabled={geoLoading}
+            className="btn-secondary text-sm py-2 px-4"
+          >
+            {geoLoading ? 'Getting location…' : '📍 Use Current Location'}
+          </button>
+          <button
+            type="button"
+            onClick={handleUseHomeAddress}
+            disabled={!user?.location_lat}
+            className="btn-secondary text-sm py-2 px-4 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            🏠 Home Address
+          </button>
+        </div>
 
         {coords.lat && (
           <p className="text-xs text-green-700 mb-2">

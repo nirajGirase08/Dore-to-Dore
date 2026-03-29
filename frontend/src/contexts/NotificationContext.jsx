@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { useDemoContext } from './DemoContext';
-import { notificationsAPI, weatherAPI } from '../services/api';
+import { notificationsAPI, weatherAPI, ridesAPI } from '../services/api';
 
 const NotificationContext = createContext(null);
 
@@ -35,19 +35,28 @@ export const NotificationProvider = ({ children }) => {
       setNotifications(incoming);
       setWeatherAlerts(weatherIncoming);
 
-      const bellNotifs = [
+      const toastableNotifs = [
         ...incoming.filter((n) => n.notification_type === 'blockage_nearby'),
+        ...incoming.filter((n) => n.notification_type === 'ride_request'),
         ...weatherIncoming,
       ];
-      const newOnes = bellNotifs.filter((n) => !shownToastIds.current.has(n.notification_id));
+      const newOnes = toastableNotifs.filter((n) => !shownToastIds.current.has(n.notification_id));
+      newOnes.forEach((n) => shownToastIds.current.add(n.notification_id));
 
-      if (newOnes.length > 0) {
-        newOnes.forEach((n) => shownToastIds.current.add(n.notification_id));
-        setToasts((prev) => [
-          ...prev,
-          ...newOnes.map((n) => ({ ...n, toastId: n.notification_id })),
-        ]);
-      }
+      // IDs of ride_request notifications still active (not yet accepted)
+      const activeRideIds = new Set(
+        incoming.filter((n) => n.notification_type === 'ride_request').map((n) => n.notification_id)
+      );
+
+      setToasts((prev) => {
+        // Remove ride toasts whose notification is no longer in the unread list (ride was accepted)
+        const filtered = prev.filter((t) => {
+          if (t.notification_type !== 'ride_request') return true;
+          return activeRideIds.has(t.notification_id);
+        });
+        if (newOnes.length === 0) return filtered;
+        return [...filtered, ...newOnes.map((n) => ({ ...n, toastId: n.notification_id }))];
+      });
     } catch {
       // Fail silently
     }
@@ -100,6 +109,14 @@ export const NotificationProvider = ({ children }) => {
     setToasts((prev) => prev.filter((t) => t.toastId !== toastId));
   };
 
+  const acceptRideFromToast = async (rideId, notificationId) => {
+    const result = await ridesAPI.accept(rideId);       // throws on failure
+    await markRead(notificationId);                      // dismisses for this user (backend)
+    dismissToast(notificationId);                        // removes toast immediately
+    fetchNotifications();                                // triggers refresh (cleans up other ride toasts)
+    return result.data;
+  };
+
   const bannerNotifications = [
     ...weatherAlerts,
     ...notifications.filter((n) => n.notification_type === 'blockage_alert'),
@@ -118,10 +135,11 @@ export const NotificationProvider = ({ children }) => {
         bannerNotifications,
         bellNotifications,
         toasts,
-        unreadCount: notifications.length + weatherAlerts.length,
+        unreadCount: bellNotifications.length,
         markRead,
         markAllRead,
         dismissToast,
+        acceptRideFromToast,
         refresh: fetchNotifications,
       }}
     >

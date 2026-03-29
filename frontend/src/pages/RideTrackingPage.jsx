@@ -132,6 +132,10 @@ const RideTrackingPage = () => {
     setUpdatingStatus(true);
     try {
       await ridesAPI.updateStatus(rideId, newStatus);
+      if (newStatus === 'completed') {
+        navigate('/');
+        return;
+      }
       await fetchRide();
     } catch (err) {
       alert(err.message || 'Failed to update status.');
