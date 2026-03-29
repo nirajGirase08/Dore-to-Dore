@@ -411,8 +411,6 @@ router.post('/', authenticate, async (req, res) => {
       ]
     });
 
-    const isNewConversation = !conversation;
-
     if (!conversation) {
       conversation = await Conversation.create({
         participant_1_id: userId,
@@ -437,7 +435,14 @@ router.post('/', authenticate, async (req, res) => {
       });
     }
 
-    if (isNewConversation && initial_message) {
+    if (offer_id || request_id) {
+      await conversation.update({
+        offer_id: offer_id || conversation.offer_id || null,
+        request_id: request_id || conversation.request_id || null,
+      });
+    }
+
+    if (isNewConverstaion && initial_message) {
       await Message.create({
         conversation_id: conversation.conversation_id,
         sender_id: userId,

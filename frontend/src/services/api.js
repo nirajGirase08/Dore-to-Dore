@@ -340,6 +340,11 @@ export const blockagesAPI = {
     const response = await api.post(`/blockages/${id}/notify`);
     return response.data;
   },
+
+  getNearbyUsers: async (lat, lng) => {
+    const response = await api.get('/blockages/nearby-users', { params: { lat, lng } });
+    return response.data;
+  },
 };
 
 // ============================================

@@ -7,6 +7,7 @@ import FulfillmentModal from '../components/marketplace/FulfillmentModal';
 import OfferCard from '../components/marketplace/OfferCard';
 import RequestCard from '../components/marketplace/RequestCard';
 import { rankRequestsForVolunteers } from '../utils/matching';
+import PeopleMap, { RADIUS_OPTIONS, haversineKm } from '../components/crisis/PeopleMap';
 
 const ACTIVE_STATUSES = ['active', 'in_progress', 'partially_claimed'];
 const FULFILLED_STATUSES = ['fulfilled'];
@@ -24,6 +25,7 @@ const VolunteerPage = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [requestSearch, setRequestSearch] = useState('');
   const getActiveOffers = (offers) => offers.filter((offer) => ACTIVE_STATUSES.includes(offer.status));
+  const [radiusKm, setRadiusKm] = useState(RADIUS_OPTIONS[2].km); // default 5 miles
 
   // Fetch user's offers
   const fetchMyOffers = async () => {

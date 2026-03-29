@@ -52,20 +52,21 @@ const dispatchBlockageNotifications = async (blockage) => {
     if (isHighSeverity) {
       targetUsers = allUsers.filter((u) => u.user_id !== reported_by);
     } else {
-      // Use the reporter's stored profile location as the notification epicenter.
-      // Browser GPS on desktops gives IP-based coords that can be far off campus,
-      // so we always anchor the 1-mile radius to the reporter's known profile location.
-      // The blockage's own lat/lng is still stored and shown on the map.
-      if (!reported_by) return;
+      // Use the blockage's actual coordinates as the epicenter.
+      // Fall back to the reporter's profile location only if no coords were captured.
+      let bLat = location_lat ? parseFloat(location_lat) : null;
+      let bLng = location_lng ? parseFloat(location_lng) : null;
 
-      const reporter = await User.findByPk(reported_by, {
-        attributes: ['location_lat', 'location_lng'],
-      });
-
-      if (!reporter?.location_lat || !reporter?.location_lng) return;
-
-      const bLat = parseFloat(reporter.location_lat);
-      const bLng = parseFloat(reporter.location_lng);
+      if (!bLat || !bLng) {
+        // No blockage coords — fall back to reporter's profile location
+        if (!reported_by) return;
+        const reporter = await User.findByPk(reported_by, {
+          attributes: ['location_lat', 'location_lng'],
+        });
+        if (!reporter?.location_lat || !reporter?.location_lng) return;
+        bLat = parseFloat(reporter.location_lat);
+        bLng = parseFloat(reporter.location_lng);
+      }
 
       targetUsers = allUsers.filter((u) => {
         if (u.user_id === reported_by) return false; // don't notify the reporter
@@ -198,6 +199,43 @@ router.get('/', async (req, res) => {
     res.json({ success: true, blockages: result });
   } catch (err) {
     console.error('Get blockages error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── GET /api/blockages/nearby-users ─────────────────────────────────────────
+// Returns users with a saved location within 1 mile of the given lat/lng
+router.get('/nearby-users', authenticate, async (req, res) => {
+  try {
+    const { lat, lng } = req.query;
+    if (!lat || !lng) {
+      return res.status(400).json({ success: false, error: 'lat and lng query params are required' });
+    }
+
+    const cLat = parseFloat(lat);
+    const cLng = parseFloat(lng);
+
+    const allUsers = await User.findAll({
+      attributes: ['user_id', 'name', 'user_type', 'location_lat', 'location_lng', 'location_address'],
+      where: { location_lat: { [require('sequelize').Op.ne]: null } },
+    });
+
+    const nearby = allUsers
+      .filter((u) => {
+        if (!u.location_lat || !u.location_lng) return false;
+        if (u.user_id === req.userId) return false; // exclude self
+        return haversineKm(cLat, cLng, parseFloat(u.location_lat), parseFloat(u.location_lng)) <= 1.60934;
+      })
+      .map((u) => ({
+        user_id: u.user_id,
+        name: u.name,
+        user_type: u.user_type,
+        location_address: u.location_address,
+        distance_miles: (haversineKm(cLat, cLng, parseFloat(u.location_lat), parseFloat(u.location_lng)) / 1.60934).toFixed(2),
+      }));
+
+    res.json({ success: true, count: nearby.length, users: nearby });
+  } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
