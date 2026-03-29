@@ -12,6 +12,23 @@ import PeopleMap, { RADIUS_OPTIONS, haversineKm } from '../components/crisis/Peo
 const ACTIVE_STATUSES = ['active', 'in_progress', 'partially_fulfilled'];
 const FULFILLED_STATUSES = ['fulfilled'];
 
+const searchMatches = (query, ...fields) => {
+  if (!query) return true;
+  const q = query.trim().toLowerCase();
+  return fields.filter(Boolean).join(' ').toLowerCase().includes(q);
+};
+
+const ChevronIcon = ({ open }) => (
+  <svg
+    className={`w-5 h-5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+  </svg>
+);
+
 const NeedHelpPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -23,9 +40,15 @@ const NeedHelpPage = () => {
   const [pendingFulfillment, setPendingFulfillment] = useState(null);
   const [error, setError] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
-  const [offerSearch, setOfferSearch] = useState('');
-  const getActiveRequests = (requests) => requests.filter((request) => ACTIVE_STATUSES.includes(request.status));
+  const [globalSearch, setGlobalSearch] = useState('');
   const [radiusKm, setRadiusKm] = useState(RADIUS_OPTIONS[2].km); // default 5 miles
+
+  // Collapse states — open by default
+  const [showMyRequests, setShowMyRequests] = useState(true);
+  const [showBestMatches, setShowBestMatches] = useState(true);
+  const [showAllOffers, setShowAllOffers] = useState(true);
+
+  const getActiveRequests = (requests) => requests.filter((request) => ACTIVE_STATUSES.includes(request.status));
 
   // Fetch user's requests
   const fetchMyRequests = async () => {
@@ -129,24 +152,13 @@ const NeedHelpPage = () => {
 
   const handleContactOffer = async (offer) => {
     try {
-      console.log('Contacting offer:', {
-        offer_id: offer.offer_id,
-        user_id: offer.user_id,
-        title: offer.title
-      });
-
       const initialMessage = `Hi! I'm interested in "${offer.title}"`;
-
       const response = await conversationsAPI.createOrGet(
         offer.user_id,
         initialMessage,
-        offer.offer_id, // pass offer_id
-        null // no request_id
+        offer.offer_id,
+        null
       );
-
-      console.log('Conversation created:', response);
-
-      // Navigate to the conversation
       navigate(`/messages/${response.data.conversation_id}`);
     } catch (err) {
       console.error('Failed to start conversation:', err);
@@ -157,27 +169,36 @@ const NeedHelpPage = () => {
   const activeRequests = myRequests.filter((request) => ACTIVE_STATUSES.includes(request.status));
   const fulfilledRequests = myRequests.filter((request) => FULFILLED_STATUSES.includes(request.status));
   const otherRequests = myRequests.filter(
-    (request) => !ACTIVE_STATUSES.includes(request.status)
-      && !FULFILLED_STATUSES.includes(request.status)
+    (request) => !ACTIVE_STATUSES.includes(request.status) && !FULFILLED_STATUSES.includes(request.status)
   );
-  const bestMatchOffers = allOffers.filter((offer) => offer.matchScore > 0).slice(0, 3);
-  const filteredOffers = allOffers.filter((offer) => {
-    const query = offerSearch.trim().toLowerCase();
-    if (!query) return true;
 
-    const searchableText = [
-      offer.title,
-      offer.description,
-      offer.location_address,
-      offer.user?.name,
-      ...(offer.items || []).map((item) => `${item.resource_type} ${item.notes || ''}`),
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase();
+  // Global search filtering
+  const filterRequest = (request) => searchMatches(
+    globalSearch,
+    request.title,
+    request.description,
+    request.location_address,
+    request.user?.name,
+    ...(request.items || []).map((i) => `${i.resource_type} ${i.notes || ''}`)
+  );
+  const filterOffer = (offer) => searchMatches(
+    globalSearch,
+    offer.title,
+    offer.description,
+    offer.location_address,
+    offer.user?.name,
+    ...(offer.items || []).map((i) => `${i.resource_type} ${i.notes || ''}`)
+  );
 
-    return searchableText.includes(query);
-  });
+  const filteredActiveRequests = activeRequests.filter(filterRequest);
+  const filteredFulfilledRequests = fulfilledRequests.filter(filterRequest);
+  const filteredOtherRequests = otherRequests.filter(filterRequest);
+  const filteredMyRequests = [...filteredActiveRequests, ...filteredFulfilledRequests, ...filteredOtherRequests];
+
+  const allBestMatchOffers = allOffers.filter((offer) => offer.matchScore > 0).slice(0, 3);
+  const filteredBestMatchOffers = allBestMatchOffers.filter(filterOffer);
+
+  const filteredOffers = allOffers.filter(filterOffer);
 
   if (loading) {
     return (
@@ -208,16 +229,8 @@ const NeedHelpPage = () => {
           onClick={() => navigate('/messages')}
           className="relative flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md"
         >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
             />
           </svg>
@@ -236,295 +249,41 @@ const NeedHelpPage = () => {
         </div>
       )}
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 gap-6 mb-8">
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="card hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200"
-        >
-          <div className="flex items-center space-x-4">
-            <div className="bg-blue-500 text-white p-4 rounded-full">
-              <svg
-                className="w-8 h-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
+      {/* Global Search Bar */}
+      <div className="mb-6">
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
+            placeholder="Search by keyword, item, location, person name..."
+            className="input-field pl-10"
+          />
+          {globalSearch && (
+            <button
+              onClick={() => setGlobalSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </div>
-            <div className="text-left">
-              <h3 className="text-xl font-semibold text-gray-800">Create New Request</h3>
-              <p className="text-sm text-gray-600">Tell us what you need</p>
-            </div>
-          </div>
-        </button>
-
-      </div>
-
-      {/* My Requests Section */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">My Requests</h2>
-        {myRequests.length === 0 ? (
-          <div className="card bg-gray-50 border-2 border-dashed border-gray-300">
-            <div className="text-center py-12">
-              <svg
-                className="w-16 h-16 mx-auto mb-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-              <p className="text-gray-600 mb-4">You haven't created any requests yet</p>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="btn-primary"
-              >
-                Create Your First Request
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Active Requests */}
-            {activeRequests.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
-                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2">
-                    Active
-                  </span>
-                  <span className="text-gray-500">({activeRequests.length})</span>
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {activeRequests.map((request) => (
-                    <RequestCard
-                      key={request.request_id}
-                      request={request}
-                      showContact={false}
-                      onEdit={handleEditRequest}
-                      onFulfillItem={handleFulfillRequestItem}
-                      onView={handleViewRequest}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Fulfilled Requests */}
-            {fulfilledRequests.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
-                  <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm mr-2">
-                    Fulfilled
-                  </span>
-                  <span className="text-gray-500">({fulfilledRequests.length})</span>
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {fulfilledRequests.map((request) => (
-                    <RequestCard
-                      key={request.request_id}
-                      request={request}
-                      showContact={false}
-                      onView={handleViewRequest}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Other Status Requests */}
-            {otherRequests.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
-                  <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm mr-2">
-                    Other
-                  </span>
-                  <span className="text-gray-500">({otherRequests.length})</span>
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {otherRequests.map((request) => (
-                    <RequestCard
-                      key={request.request_id}
-                      request={request}
-                      showContact={false}
-                      onView={handleViewRequest}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {activeRequests.length > 0 && bestMatchOffers.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Best Matches</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Ranked by item overlap, gender preference, urgency, and location
+            </button>
+          )}
+        </div>
+        {globalSearch && (
+          <p className="mt-1.5 text-sm text-gray-500">
+            Showing results for <span className="font-medium text-gray-700">"{globalSearch}"</span>
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {bestMatchOffers.map((offer) => (
-              <OfferCard
-                key={`best-offer-${offer.offer_id}`}
-                offer={offer}
-                matchScore={offer.matchScore}
-                matchDistanceKm={offer.matchDistanceKm}
-                onContact={handleContactOffer}
-                onView={handleViewOffer}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="mb-8">
-        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">All Available Help</h2>
-            <p className="text-sm text-gray-600">
-              Search and browse all eligible offers, sorted by match score
-            </p>
-          </div>
-          <div className="w-full md:max-w-sm">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search Offers
-            </label>
-            <input
-              type="text"
-              value={offerSearch}
-              onChange={(e) => setOfferSearch(e.target.value)}
-              placeholder="Search by keyword, item, person, or location"
-              className="input-field"
-            />
-          </div>
-        </div>
-        {filteredOffers.length === 0 ? (
-          <div className="card bg-gray-50 border-2 border-dashed border-gray-300">
-            <div className="text-center py-12">
-              <p className="text-gray-600">No matching offers found</p>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredOffers.map((offer) => (
-              <OfferCard
-                key={offer.offer_id}
-                offer={offer}
-                matchScore={activeRequests.length > 0 ? offer.matchScore : undefined}
-                matchDistanceKm={offer.matchDistanceKm}
-                onContact={handleContactOffer}
-                onView={handleViewOffer}
-              />
-            ))}
-          </div>
         )}
       </div>
-
-      {/* Urgency Level Indicators */}
-      {myRequests.length === 0 && (
-        <div>
-          <h3 className="text-xl font-bold text-gray-800 mb-4">Urgency Levels</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="card bg-gray-50 border-2 border-gray-200 text-center">
-              <div className="text-gray-600 mb-2">
-                <svg
-                  className="w-10 h-10 mx-auto"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h4 className="font-semibold text-gray-800">Low Priority</h4>
-              <p className="text-xs text-gray-600 mt-1">Not urgent</p>
-            </div>
-
-            <div className="card bg-yellow-50 border-2 border-yellow-200 text-center">
-              <div className="text-yellow-600 mb-2">
-                <svg
-                  className="w-10 h-10 mx-auto"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h4 className="font-semibold text-gray-800">Medium Priority</h4>
-              <p className="text-xs text-gray-600 mt-1">Needed within a day or two</p>
-            </div>
-
-            <div className="card bg-orange-50 border-2 border-orange-200 text-center">
-              <div className="text-orange-600 mb-2">
-                <svg
-                  className="w-10 h-10 mx-auto"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                  />
-                </svg>
-              </div>
-              <h4 className="font-semibold text-gray-800">High Priority</h4>
-              <p className="text-xs text-gray-600 mt-1">Urgent, needed soon</p>
-            </div>
-
-            <div className="card bg-red-50 border-2 border-red-200 text-center">
-              <div className="text-red-600 mb-2">
-                <svg
-                  className="w-10 h-10 mx-auto"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-              </div>
-              <h4 className="font-semibold text-gray-800">Critical</h4>
-              <p className="text-xs text-gray-600 mt-1">Immediate assistance needed</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Volunteers Nearby — Map */}
       {(() => {
         const userLat = user?.location_lat ? parseFloat(user.location_lat) : null;
         const userLng = user?.location_lng ? parseFloat(user.location_lng) : null;
-
         const visibleOnMap = allOffers.filter((o) => {
           const u = o.user;
           if (!u?.location_lat || !u?.location_lng) return false;
@@ -532,9 +291,7 @@ const NeedHelpPage = () => {
           if (!userLat || !userLng) return true;
           return haversineKm(userLat, userLng, parseFloat(u.location_lat), parseFloat(u.location_lng)) <= radiusKm;
         });
-
         const selected = RADIUS_OPTIONS.find((o) => o.km === radiusKm) || RADIUS_OPTIONS[2];
-
         return (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-3">
@@ -547,9 +304,7 @@ const NeedHelpPage = () => {
               <select
                 className="input-field w-auto"
                 value={radiusKm ?? ''}
-                onChange={(e) =>
-                  setRadiusKm(e.target.value === '' ? null : parseFloat(e.target.value))
-                }
+                onChange={(e) => setRadiusKm(e.target.value === '' ? null : parseFloat(e.target.value))}
               >
                 {RADIUS_OPTIONS.map((r) => (
                   <option key={r.label} value={r.km ?? ''}>{r.label}</option>
@@ -563,6 +318,13 @@ const NeedHelpPage = () => {
               userLng={userLng}
               radiusKm={radiusKm}
               radiusLabel={selected.label}
+              onUserClick={(clickedUserId, clickedUserName) => {
+                const parsedId = parseInt(clickedUserId);
+                const userPosts = allOffers.filter((o) => o.user_id === parsedId);
+                navigate(`/users/${parsedId}?type=offers`, {
+                  state: { posts: userPosts, type: 'offers', userName: clickedUserName },
+                });
+              }}
             />
             <p className="text-xs text-gray-500 mt-2 flex items-center gap-3">
               <span className="inline-flex items-center gap-1"><span style={{color:'#16a34a',fontWeight:700}}>▲</span> Volunteer</span>
@@ -572,6 +334,254 @@ const NeedHelpPage = () => {
           </div>
         );
       })()}
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 gap-6 mb-8">
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="card hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="bg-blue-500 text-white p-4 rounded-full">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <div className="text-left">
+              <h3 className="text-xl font-semibold text-gray-800">Create New Request</h3>
+              <p className="text-sm text-gray-600">Tell us what you need</p>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {/* My Requests Section */}
+      {(!globalSearch || filteredMyRequests.length > 0 || myRequests.length === 0) && (
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-gray-800">
+            My Requests
+            {globalSearch && <span className="ml-2 text-base font-normal text-gray-500">({filteredMyRequests.length})</span>}
+          </h2>
+          <button
+            onClick={() => setShowMyRequests((v) => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            {showMyRequests ? 'Collapse' : 'Expand'}
+            <ChevronIcon open={showMyRequests} />
+          </button>
+        </div>
+
+        {showMyRequests && (
+          <>
+            {myRequests.length === 0 ? (
+              <div className="card bg-gray-50 border-2 border-dashed border-gray-300">
+                <div className="text-center py-12">
+                  <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                  <p className="text-gray-600 mb-4">You haven't created any requests yet</p>
+                  <button onClick={() => setShowCreateModal(true)} className="btn-primary">
+                    Create Your First Request
+                  </button>
+                </div>
+              </div>
+            ) : filteredMyRequests.length === 0 ? (
+              <div className="card bg-gray-50 border-2 border-dashed border-gray-300">
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No requests match your search</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {filteredActiveRequests.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
+                      <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm mr-2">Active</span>
+                      <span className="text-gray-500">({filteredActiveRequests.length})</span>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredActiveRequests.map((request) => (
+                        <RequestCard key={request.request_id} request={request} showContact={false}
+                          onEdit={handleEditRequest} onFulfillItem={handleFulfillRequestItem} onView={handleViewRequest} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {filteredFulfilledRequests.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
+                      <span className="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm mr-2">Fulfilled</span>
+                      <span className="text-gray-500">({filteredFulfilledRequests.length})</span>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredFulfilledRequests.map((request) => (
+                        <RequestCard key={request.request_id} request={request} showContact={false} onView={handleViewRequest} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {filteredOtherRequests.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center">
+                      <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm mr-2">Other</span>
+                      <span className="text-gray-500">({filteredOtherRequests.length})</span>
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredOtherRequests.map((request) => (
+                        <RequestCard key={request.request_id} request={request} showContact={false} onView={handleViewRequest} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      )}
+
+      {/* Best Matches Section */}
+      {activeRequests.length > 0 && allBestMatchOffers.length > 0 && (!globalSearch || filteredBestMatchOffers.length > 0) && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Best Matches
+                {globalSearch && <span className="ml-2 text-base font-normal text-gray-500">({filteredBestMatchOffers.length})</span>}
+              </h2>
+              <p className="text-sm text-gray-600">Ranked by item overlap, gender preference, urgency, and location</p>
+            </div>
+            <button
+              onClick={() => setShowBestMatches((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              {showBestMatches ? 'Collapse' : 'Expand'}
+              <ChevronIcon open={showBestMatches} />
+            </button>
+          </div>
+
+          {showBestMatches && (
+            filteredBestMatchOffers.length === 0 ? (
+              <div className="card bg-gray-50 border-2 border-dashed border-gray-300">
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No best matches for your search</p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                {filteredBestMatchOffers.map((offer) => (
+                  <OfferCard
+                    key={`best-offer-${offer.offer_id}`}
+                    offer={offer}
+                    matchScore={offer.matchScore}
+                    matchDistanceKm={offer.matchDistanceKm}
+                    onContact={handleContactOffer}
+                    onView={handleViewOffer}
+                  />
+                ))}
+              </div>
+            )
+          )}
+        </div>
+      )}
+
+      {/* All Available Help Section */}
+      {(!globalSearch || filteredOffers.length > 0) && (
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">
+              All Available Help
+              {globalSearch && <span className="ml-2 text-base font-normal text-gray-500">({filteredOffers.length})</span>}
+            </h2>
+            <p className="text-sm text-gray-600">Search and browse all eligible offers, sorted by match score</p>
+          </div>
+          <button
+            onClick={() => setShowAllOffers((v) => !v)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            {showAllOffers ? 'Collapse' : 'Expand'}
+            <ChevronIcon open={showAllOffers} />
+          </button>
+        </div>
+
+        {showAllOffers && (
+          filteredOffers.length === 0 ? (
+            <div className="card bg-gray-50 border-2 border-dashed border-gray-300">
+              <div className="text-center py-12">
+                <p className="text-gray-600">No matching offers found</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              {filteredOffers.map((offer) => (
+                <OfferCard
+                  key={offer.offer_id}
+                  offer={offer}
+                  matchScore={activeRequests.length > 0 ? offer.matchScore : undefined}
+                  matchDistanceKm={offer.matchDistanceKm}
+                  onContact={handleContactOffer}
+                  onView={handleViewOffer}
+                />
+              ))}
+            </div>
+          )
+        )}
+      </div>
+      )}
+
+      {/* Urgency Level Indicators */}
+      {myRequests.length === 0 && (
+        <div>
+          <h3 className="text-xl font-bold text-gray-800 mb-4">Urgency Levels</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="card bg-gray-50 border-2 border-gray-200 text-center">
+              <div className="text-gray-600 mb-2">
+                <svg className="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-gray-800">Low Priority</h4>
+              <p className="text-xs text-gray-600 mt-1">Not urgent</p>
+            </div>
+
+            <div className="card bg-yellow-50 border-2 border-yellow-200 text-center">
+              <div className="text-yellow-600 mb-2">
+                <svg className="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-gray-800">Medium Priority</h4>
+              <p className="text-xs text-gray-600 mt-1">Needed within a day or two</p>
+            </div>
+
+            <div className="card bg-orange-50 border-2 border-orange-200 text-center">
+              <div className="text-orange-600 mb-2">
+                <svg className="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-gray-800">High Priority</h4>
+              <p className="text-xs text-gray-600 mt-1">Urgent, needed soon</p>
+            </div>
+
+            <div className="card bg-red-50 border-2 border-red-200 text-center">
+              <div className="text-red-600 mb-2">
+                <svg className="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h4 className="font-semibold text-gray-800">Critical</h4>
+              <p className="text-xs text-gray-600 mt-1">Immediate assistance needed</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create Request Modal */}
       <CreateRequestModal

@@ -56,18 +56,22 @@ const ICONS = {
 
 /**
  * Props:
- *   people      – array of offer/request objects with a .user that has location_lat/lng
- *   mode        – 'volunteer' | 'need-help'
- *   userLat     – current user's lat
- *   userLng     – current user's lng
- *   radiusKm    – selected radius (km), null = any
- *   radiusLabel – display label for the radius
+ *   people       – array of offer/request objects with a .user that has location_lat/lng
+ *   mode         – 'volunteer' | 'need-help'
+ *   userLat      – current user's lat
+ *   userLng      – current user's lng
+ *   radiusKm     – selected radius (km), null = any
+ *   radiusLabel  – display label for the radius
+ *   onUserClick  – optional (userId: string, userName: string) => void
  */
-const PeopleMap = ({ people, mode, userLat, userLng, radiusKm, radiusLabel }) => {
+const PeopleMap = ({ people, mode, userLat, userLng, radiusKm, radiusLabel, onUserClick }) => {
   const mapRef        = useRef(null);
   const leafletRef    = useRef(null);
   const radiusCircle  = useRef(null);
   const markerRefs    = useRef([]);
+  const onUserClickRef = useRef(onUserClick);
+
+  useEffect(() => { onUserClickRef.current = onUserClick; }, [onUserClick]);
 
   const lat = userLat ?? NASHVILLE[0];
   const lng = userLng ?? NASHVILLE[1];
@@ -90,11 +94,17 @@ const PeopleMap = ({ people, mode, userLat, userLng, radiusKm, radiusLabel }) =>
       .addTo(map)
       .bindPopup('<p style="font-weight:700;margin:0">📍 Your location</p>');
 
+    // Global callback used by popup buttons (Leaflet popup HTML can't call React fns directly)
+    window.__peopleMapUserClick = (userId, userName) => {
+      onUserClickRef.current?.(userId, userName);
+    };
+
     return () => {
       map.remove();
       leafletRef.current   = null;
       radiusCircle.current = null;
       markerRefs.current   = [];
+      delete window.__peopleMapUserClick;
     };
   }, []);
 
@@ -142,13 +152,20 @@ const PeopleMap = ({ people, mode, userLat, userLng, radiusKm, radiusLabel }) =>
       const title   = item.title || '';
       const address = u.location_address || '';
 
+      const safeUserId = String(u.user_id).replace(/'/g, '');
+      const safeName   = name.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+
       const marker = L.marker([pLat, pLng], { icon })
         .addTo(map)
         .bindPopup(
-          `<div style="min-width:150px">
+          `<div style="min-width:160px">
             <p style="font-weight:700;margin:0 0 3px">${name}</p>
             ${title ? `<p style="font-size:12px;color:#374151;margin:0 0 3px">${title}</p>` : ''}
-            ${address ? `<p style="font-size:11px;color:#6b7280;margin:0">${address}</p>` : ''}
+            ${address ? `<p style="font-size:11px;color:#6b7280;margin:0 0 8px">${address}</p>` : ''}
+            <button
+              onclick="window.__peopleMapUserClick('${safeUserId}','${safeName}')"
+              style="margin-top:4px;padding:5px 12px;background:#3b82f6;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;width:100%"
+            >View Posts →</button>
           </div>`
         );
 

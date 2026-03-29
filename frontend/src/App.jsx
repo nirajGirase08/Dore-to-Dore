@@ -12,6 +12,7 @@ import ReportBlockage from './pages/ReportBlockage';
 import ProfilePage from './pages/ProfilePage';
 import OfferDetailPage from './pages/OfferDetailPage';
 import RequestDetailPage from './pages/RequestDetailPage';
+import UserPostsPage from './pages/UserPostsPage';
 import Layout from './components/shared/Layout';
 
 // Protected Route wrapper
@@ -158,6 +159,17 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <RequestDetailPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/users/:userId"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <UserPostsPage />
                 </Layout>
               </ProtectedRoute>
             }

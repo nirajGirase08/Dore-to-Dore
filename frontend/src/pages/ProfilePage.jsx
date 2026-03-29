@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authAPI, trustAPI, uploadsAPI } from '../services/api';
 import PendingFeedbackSection from '../components/shared/PendingFeedbackSection';
@@ -6,6 +7,7 @@ import TrustSummary from '../components/shared/TrustSummary';
 
 const ProfilePage = () => {
   const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -115,7 +117,7 @@ const ProfilePage = () => {
         updateUser(updatedUser);
       }
 
-      setSuccessMessage('Profile updated.');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to update profile.');
     } finally {

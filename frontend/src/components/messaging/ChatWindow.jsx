@@ -148,8 +148,12 @@ const ChatWindow = ({ conversation, onBack, onMessageSent }) => {
           </div>
         ) : (
           <>
-            {messages.map((message) => {
-              const isOwnMessage = message.sender_id === user?.user_id;
+            {[...messages].sort((a, b) => {
+              const tA = new Date(a.created_at || a.sent_at || 0).getTime();
+              const tB = new Date(b.created_at || b.sent_at || 0).getTime();
+              return tA - tB;
+            }).map((message) => {
+              const isOwnMessage = String(message.sender_id) === String(user?.user_id);
               return (
                 <div
                   key={message.message_id}

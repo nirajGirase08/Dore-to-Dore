@@ -435,14 +435,7 @@ router.post('/', authenticate, async (req, res) => {
       });
     }
 
-    if (offer_id || request_id) {
-      await conversation.update({
-        offer_id: offer_id || conversation.offer_id || null,
-        request_id: request_id || conversation.request_id || null,
-      });
-    }
-
-    if (isNewConverstaion && initial_message) {
+    if (initial_message) {
       await Message.create({
         conversation_id: conversation.conversation_id,
         sender_id: userId,

@@ -24,7 +24,10 @@ export const AuthProvider = ({ children }) => {
 
       if (token && savedUser) {
         try {
-          setUser(JSON.parse(savedUser));
+          const parsed = JSON.parse(savedUser);
+          // Normalize user_id to number so === comparisons work everywhere
+          if (parsed?.user_id != null) parsed.user_id = parseInt(parsed.user_id, 10);
+          setUser(parsed);
           // Optionally verify token with backend
           // const response = await authAPI.getCurrentUser();
           // setUser(response.data.user);
@@ -50,12 +53,10 @@ export const AuthProvider = ({ children }) => {
 
       if (response.success) {
         const { token, user } = response.data;
+        if (user?.user_id != null) user.user_id = parseInt(user.user_id, 10);
 
-        // Save to localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-
-        // Update state
         setUser(user);
 
         return { success: true };
@@ -81,12 +82,10 @@ export const AuthProvider = ({ children }) => {
 
       if (response.success) {
         const { token, user } = response.data;
+        if (user?.user_id != null) user.user_id = parseInt(user.user_id, 10);
 
-        // Save to localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-
-        // Update state
         setUser(user);
 
         return { success: true };

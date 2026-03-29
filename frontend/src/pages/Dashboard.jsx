@@ -54,51 +54,43 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Welcome Section */}
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">
-          Welcome to Dore-to-Dore, {user?.name}!
-        </h1>
-        <p className="text-lg text-gray-600 mb-6">
-          How would you like to help the Vanderbilt community today?
-        </p>
+      {/* Top bar — buttons pinned to top right */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-800 mb-1">
+            Welcome to Dore-to-Dore, {user?.name}!
+          </h1>
+          <p className="text-lg text-gray-600">
+            How would you like to help the Vanderbilt community today?
+          </p>
+        </div>
 
-        <div className="mb-6 flex justify-center">
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Report Hazard */}
+          <Link
+            to="/report-blockage"
+            className="flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 px-4 py-2.5 text-white font-semibold text-sm shadow-md transition-colors"
+          >
+            <span>⚠️</span>
+            <span>Report Hazard</span>
+          </Link>
+
+          {/* Messages */}
           <button
             onClick={() => navigate('/messages')}
-            className="relative flex items-center gap-3 rounded-xl bg-white px-6 py-3 text-gray-800 shadow-md transition-shadow hover:shadow-lg"
+            className="relative flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-gray-800 shadow-md transition-shadow hover:shadow-lg border border-gray-100"
           >
-            <svg
-              className="h-6 w-6 text-purple-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
+            <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            <span className="font-semibold">Messages</span>
+            <span className="font-semibold text-sm">Messages</span>
             {unreadCount > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+              <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </button>
-        </div>
-
-        {/* Report Blockage CTA */}
-        <div className="inline-flex flex-col items-center gap-2">
-          <p className="text-sm text-gray-500">Spotted a road hazard or accident nearby?</p>
-          <Link
-            to="/report-blockage"
-            className="btn-primary bg-red-600 hover:bg-red-700 py-3 px-8"
-          >
-            ⚠️ Report Road Hazard
-          </Link>
         </div>
       </div>
 
