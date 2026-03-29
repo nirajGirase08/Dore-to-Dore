@@ -2,17 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useDemoContext } from '../contexts/DemoContext';
 import { conversationsAPI, trustAPI } from '../services/api';
 import PendingFeedbackSection from '../components/shared/PendingFeedbackSection';
 import TrustSummary from '../components/shared/TrustSummary';
 import MapView from '../components/crisis/MapView';
+import NewsSummaryModal from '../components/dashboard/NewsSummaryModal';
+import DemoContextBanner from '../components/shared/DemoContextBanner';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { demoEnabled, toggleDemoEnabled, demoRange } = useDemoContext();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
   const [trustSummary, setTrustSummary] = useState(null);
   const [pendingFeedback, setPendingFeedback] = useState([]);
+  const [showNewsSummaryModal, setShowNewsSummaryModal] = useState(false);
 
   const loadTrust = async () => {
     try {
@@ -54,6 +59,8 @@ const Dashboard = () => {
         </div>
       )}
 
+      <DemoContextBanner className="mb-6" />
+
       {/* Top bar — buttons pinned to top right */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -66,6 +73,26 @@ const Dashboard = () => {
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">
+          <button
+            onClick={toggleDemoEnabled}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 font-semibold text-sm shadow-md transition-colors ${
+              demoEnabled
+                ? 'bg-amber-500 text-white hover:bg-amber-600'
+                : 'bg-white text-gray-800 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            <span>{demoEnabled ? '🧪' : '📅'}</span>
+            <span>{demoEnabled ? 'Demo Context On' : 'Demo Context Off'}</span>
+          </button>
+
+          <button
+            onClick={() => setShowNewsSummaryModal(true)}
+            className="flex items-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-900 px-4 py-2.5 text-white font-semibold text-sm shadow-md transition-colors"
+          >
+            <span>📰</span>
+            <span>Get AI Summarized News</span>
+          </button>
+
           {/* Report Hazard */}
           <Link
             to="/report-blockage"
@@ -168,13 +195,14 @@ const Dashboard = () => {
             <h2 className="text-2xl font-bold text-gray-800">Nashville Crisis Map</h2>
             <p className="text-sm text-gray-500 mt-1">
               Active road hazards · Updates every 30 seconds
+              {demoEnabled ? ` · Weather window ${demoRange.startDate} to ${demoRange.endDate}` : ''}
             </p>
           </div>
           <Link to="/report-blockage" className="btn-secondary text-sm py-2 px-4">
             View All Hazards →
           </Link>
         </div>
-        <MapView />
+        <MapView contextLabel={demoEnabled ? demoRange.label : null} />
         {/* Map legend */}
         <div className="flex flex-wrap gap-4 mt-3 text-xs text-gray-600">
           <span className="flex items-center gap-1.5">
@@ -200,6 +228,11 @@ const Dashboard = () => {
           </span>
         </div>
       </div>
+      <NewsSummaryModal
+        key={demoEnabled ? 'historical-context' : 'current-context'}
+        isOpen={showNewsSummaryModal}
+        onClose={() => setShowNewsSummaryModal(false)}
+      />
     </div>
   );
 };

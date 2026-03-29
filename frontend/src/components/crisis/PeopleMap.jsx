@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useWeatherOverlay } from '../../hooks/useWeatherOverlay';
+import WeatherMapOverlay from './WeatherMapOverlay';
 
 const NASHVILLE = [36.1627, -86.7816];
 
@@ -64,12 +66,17 @@ const ICONS = {
  *   radiusLabel  – display label for the radius
  *   onUserClick  – optional (userId: string, userName: string) => void
  */
-const PeopleMap = ({ people, mode, userLat, userLng, radiusKm, radiusLabel, onUserClick }) => {
+const PeopleMap = ({ people, mode, userLat, userLng, radiusKm, radiusLabel, onUserClick, contextLabel = null }) => {
   const mapRef        = useRef(null);
   const leafletRef    = useRef(null);
   const radiusCircle  = useRef(null);
+  const impactZoneRef = useRef(null);
   const markerRefs    = useRef([]);
   const onUserClickRef = useRef(onUserClick);
+  const { weatherSummary, overlayStyle, showImpactZone } = useWeatherOverlay({
+    location_lat: userLat,
+    location_lng: userLng,
+  });
 
   useEffect(() => { onUserClickRef.current = onUserClick; }, [onUserClick]);
 
@@ -103,6 +110,7 @@ const PeopleMap = ({ people, mode, userLat, userLng, radiusKm, radiusLabel, onUs
       map.remove();
       leafletRef.current   = null;
       radiusCircle.current = null;
+      impactZoneRef.current = null;
       markerRefs.current   = [];
       delete window.__peopleMapUserClick;
     };
@@ -129,6 +137,27 @@ const PeopleMap = ({ people, mode, userLat, userLng, radiusKm, radiusLabel, onUs
       }).addTo(map);
     }
   }, [radiusKm]);
+
+  useEffect(() => {
+    const map = leafletRef.current;
+    if (!map) return;
+
+    if (impactZoneRef.current) {
+      impactZoneRef.current.remove();
+      impactZoneRef.current = null;
+    }
+
+    if (showImpactZone) {
+      impactZoneRef.current = L.circle([lat, lng], {
+        radius: 10000,
+        color: overlayStyle.borderColor,
+        weight: 2,
+        dashArray: '8 8',
+        fillColor: overlayStyle.fillColor,
+        fillOpacity: overlayStyle.fillOpacity,
+      }).addTo(map);
+    }
+  }, [lat, lng, overlayStyle.borderColor, overlayStyle.fillColor, overlayStyle.fillOpacity, showImpactZone]);
 
   // ── Update people markers when list changes ──────────────────────────────
   useEffect(() => {
@@ -178,6 +207,11 @@ const PeopleMap = ({ people, mode, userLat, userLng, radiusKm, radiusLabel, onUs
       className="w-full rounded-2xl overflow-hidden shadow-lg border border-gray-200 relative"
       style={{ height: 400 }}
     >
+      <WeatherMapOverlay
+        weatherSummary={weatherSummary}
+        overlayStyle={overlayStyle}
+        contextLabel={contextLabel}
+      />
       <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
     </div>
   );

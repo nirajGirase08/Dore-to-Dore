@@ -35,8 +35,12 @@ const Toast = ({ toast, onDismiss }) => {
 
   // Extract blockage type from title (e.g. "🚧 Nearby Blockage: road closure")
   const typeKey = toast.title?.toLowerCase().replace(/.*: /, '').replace(/ /g, '_');
-  const icon = TYPE_ICONS[typeKey] || '🚧';
-  const borderColor = SEVERITY_COLORS[toast.severity] || 'border-l-orange-400';
+  const icon = toast.notification_type === 'weather_alert'
+    ? '🌩️'
+    : TYPE_ICONS[typeKey] || '🚧';
+  const borderColor = toast.notification_type === 'weather_alert'
+    ? 'border-l-blue-500'
+    : SEVERITY_COLORS[toast.severity] || 'border-l-orange-400';
 
   return (
     <div
@@ -49,7 +53,7 @@ const Toast = ({ toast, onDismiss }) => {
           <p className="text-xs text-gray-500 mt-1 line-clamp-2">{toast.message}</p>
         )}
         <p className="text-xs text-orange-500 font-medium mt-1">
-          Reported {formatTimeAgo(toast.created_at)}
+          {toast.notification_type === 'weather_alert' ? 'Detected' : 'Reported'} {formatTimeAgo(toast.created_at)}
         </p>
       </div>
       <button

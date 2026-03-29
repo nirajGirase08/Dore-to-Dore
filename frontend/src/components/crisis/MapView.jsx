@@ -3,6 +3,8 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAuth } from '../../contexts/AuthContext';
 import { getBlockages } from '../../services/blockageService';
+import { useWeatherOverlay } from '../../hooks/useWeatherOverlay';
+import WeatherMapOverlay from './WeatherMapOverlay';
 
 const NASHVILLE = [36.1627, -86.7816];
 
@@ -60,13 +62,15 @@ const fetchMedicalFacilities = async (map) => {
   }
 };
 
-const MapView = () => {
+const MapView = ({ contextLabel = null }) => {
   const { user } = useAuth();
   const mapRef        = useRef(null);
   const leafletRef    = useRef(null);
   const blockageLayer = useRef({});
+  const impactZoneRef = useRef(null);
   const pollTimer     = useRef(null);
   const [loading, setLoading] = useState(true);
+  const { weatherSummary, overlayStyle, showImpactZone } = useWeatherOverlay(user);
 
   const userLat = user?.location_lat ? parseFloat(user.location_lat) : NASHVILLE[0];
   const userLng = user?.location_lng ? parseFloat(user.location_lng) : NASHVILLE[1];
@@ -151,11 +155,38 @@ const MapView = () => {
       map.remove();
       leafletRef.current    = null;
       blockageLayer.current = {};
+      impactZoneRef.current = null;
     };
   }, []);
 
+  useEffect(() => {
+    const map = leafletRef.current;
+    if (!map) return;
+
+    if (impactZoneRef.current) {
+      impactZoneRef.current.remove();
+      impactZoneRef.current = null;
+    }
+
+    if (showImpactZone) {
+      impactZoneRef.current = L.circle([userLat, userLng], {
+        radius: 12000,
+        color: overlayStyle.borderColor,
+        weight: 2,
+        dashArray: '8 8',
+        fillColor: overlayStyle.fillColor,
+        fillOpacity: overlayStyle.fillOpacity,
+      }).addTo(map);
+    }
+  }, [showImpactZone, overlayStyle.borderColor, overlayStyle.fillColor, overlayStyle.fillOpacity, userLat, userLng]);
+
   return (
     <div className="w-full rounded-2xl overflow-hidden shadow-xl border border-gray-200 relative" style={{ height: 520 }}>
+      <WeatherMapOverlay
+        weatherSummary={weatherSummary}
+        overlayStyle={overlayStyle}
+        contextLabel={contextLabel}
+      />
       <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
 
       {loading && (

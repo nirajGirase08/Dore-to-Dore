@@ -1,12 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { aiAPI } from '../../services/api';
+import { useDemoContext } from '../../contexts/DemoContext';
 
 const AISuggestionModal = ({ isOpen, mode, onClose, onApply }) => {
+  const { demoEnabled, demoRange, getWeatherContextPayload } = useDemoContext();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [weatherMode, setWeatherMode] = useState('current');
-  const [historicalDate, setHistoricalDate] = useState('');
   const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setLoading(false);
+      setError('');
+      setResult(null);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    setError('');
+    setResult(null);
+  }, [demoEnabled]);
 
   if (!isOpen) {
     return null;
@@ -15,12 +28,12 @@ const AISuggestionModal = ({ isOpen, mode, onClose, onApply }) => {
   const handleGenerate = async () => {
     setLoading(true);
     setError('');
+    setResult(null);
 
     try {
       const response = await aiAPI.getSuggestion({
         mode,
-        weather_mode: weatherMode,
-        historical_weather_date: weatherMode === 'historical' ? historicalDate || null : null,
+        ...getWeatherContextPayload(),
       });
       setResult(response.data || null);
     } catch (err) {
@@ -43,27 +56,11 @@ const AISuggestionModal = ({ isOpen, mode, onClose, onApply }) => {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-[1fr_1fr_auto]">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Weather Mode</label>
-            <select
-              value={weatherMode}
-              onChange={(event) => setWeatherMode(event.target.value)}
-              className="input-field"
-            >
-              <option value="current">Current weather</option>
-              <option value="historical">Historical weather</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Historical Date</label>
-            <input
-              type="date"
-              value={historicalDate}
-              onChange={(event) => setHistoricalDate(event.target.value)}
-              disabled={weatherMode !== 'historical'}
-              className="input-field"
-            />
+        <div className="mt-6 grid gap-4 md:grid-cols-[1fr_auto]">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+            {demoEnabled
+              ? `${demoRange.label}. AI suggestions will use this weather window while blockages remain live/current.`
+              : 'AI suggestions will use current weather.'}
           </div>
           <div className="flex items-end">
             <button onClick={handleGenerate} disabled={loading} className="btn-primary w-full md:w-auto">
@@ -119,17 +116,31 @@ const AISuggestionModal = ({ isOpen, mode, onClose, onApply }) => {
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Weather</p>
                   <p className="mt-1 text-sm text-gray-700">
-                    {result.context_preview?.weather?.summary || 'No weather data'}
+                    {result.context_preview?.weather?.display_summary
+                      || result.context_preview?.weather?.summary
+                      || 'No weather data'}
                   </p>
                   <p className="text-xs text-gray-500">
                     Mode: {result.weather_mode_used}
-                    {result.historical_weather_date_used ? ` (${result.historical_weather_date_used})` : ''}
+                    {result.weather_date_range_used?.start_date
+                      ? ` (${result.weather_date_range_used.start_date}${
+                        result.weather_date_range_used.end_date &&
+                        result.weather_date_range_used.end_date !== result.weather_date_range_used.start_date
+                          ? ` to ${result.weather_date_range_used.end_date}`
+                          : ''
+                      })`
+                      : result.historical_weather_date_used
+                        ? ` (${result.historical_weather_date_used})`
+                        : ''}
+                  </p>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Risk tags: {(result.context_preview?.weather?.impact_summary?.risk_tags || []).join(', ') || 'none'}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Nearby blockages</p>
                   <p className="mt-1 text-sm text-gray-700">
-                    {result.context_preview?.nearby_blockages?.length || 0} considered
+                    {result.context_preview?.nearby_blockages?.length || 0} found
                   </p>
                 </div>
                 <div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useDemoContext } from '../contexts/DemoContext';
 import { requestsAPI, offersAPI, conversationsAPI } from '../services/api';
 import { RESOURCE_TYPES } from '../constants/marketplace';
 import AISuggestionModal from '../components/marketplace/AISuggestionModal';
@@ -10,6 +11,7 @@ import RequestCard from '../components/marketplace/RequestCard';
 import OfferCard from '../components/marketplace/OfferCard';
 import { rankOffersForNeeds } from '../utils/matching';
 import PeopleMap, { RADIUS_OPTIONS, haversineKm } from '../components/crisis/PeopleMap';
+import DemoContextBanner from '../components/shared/DemoContextBanner';
 
 const ACTIVE_STATUSES = ['active', 'in_progress', 'partially_fulfilled'];
 const FULFILLED_STATUSES = ['fulfilled'];
@@ -52,6 +54,7 @@ const mapSuggestedItemToResourceType = (item) => {
 
 const NeedHelpPage = () => {
   const { user } = useAuth();
+  const { demoEnabled, demoRange } = useDemoContext();
   const navigate = useNavigate();
   const [myRequests, setMyRequests] = useState([]);
   const [allOffers, setAllOffers] = useState([]);
@@ -325,6 +328,8 @@ const NeedHelpPage = () => {
         )}
       </div>
 
+      <DemoContextBanner className="mb-6" />
+
       {/* Volunteers Nearby — Map */}
       {(() => {
         const userLat = user?.location_lat ? parseFloat(user.location_lat) : null;
@@ -363,6 +368,7 @@ const NeedHelpPage = () => {
               userLng={userLng}
               radiusKm={radiusKm}
               radiusLabel={selected.label}
+              contextLabel={demoEnabled ? demoRange.label : null}
               onUserClick={(clickedUserId, clickedUserName) => {
                 const parsedId = parseInt(clickedUserId);
                 const userPosts = allOffers.filter((o) => o.user_id === parsedId);
@@ -680,6 +686,7 @@ const NeedHelpPage = () => {
       />
 
       <AISuggestionModal
+        key={demoEnabled ? 'historical-context' : 'current-context'}
         isOpen={showAISuggestionModal}
         mode="request"
         onClose={() => setShowAISuggestionModal(false)}

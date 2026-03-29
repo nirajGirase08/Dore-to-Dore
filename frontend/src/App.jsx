@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { DemoProvider } from './contexts/DemoContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -54,6 +55,7 @@ const PublicRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
+      <DemoProvider>
       <NotificationProvider>
       <Router>
         <Routes>
@@ -208,6 +210,7 @@ function App() {
         </Routes>
       </Router>
       </NotificationProvider>
+      </DemoProvider>
     </AuthProvider>
   );
 }

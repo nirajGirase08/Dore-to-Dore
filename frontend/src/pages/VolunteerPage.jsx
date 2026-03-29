@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useDemoContext } from '../contexts/DemoContext';
 import { offersAPI, requestsAPI, conversationsAPI } from '../services/api';
 import { RESOURCE_TYPES } from '../constants/marketplace';
 import AISuggestionModal from '../components/marketplace/AISuggestionModal';
@@ -10,6 +11,7 @@ import OfferCard from '../components/marketplace/OfferCard';
 import RequestCard from '../components/marketplace/RequestCard';
 import { rankRequestsForVolunteers } from '../utils/matching';
 import PeopleMap, { RADIUS_OPTIONS, haversineKm } from '../components/crisis/PeopleMap';
+import DemoContextBanner from '../components/shared/DemoContextBanner';
 
 const ACTIVE_STATUSES = ['active', 'in_progress', 'partially_claimed'];
 const FULFILLED_STATUSES = ['fulfilled'];
@@ -52,6 +54,7 @@ const mapSuggestedItemToResourceType = (item) => {
 
 const VolunteerPage = () => {
   const { user } = useAuth();
+  const { demoEnabled, demoRange } = useDemoContext();
   const navigate = useNavigate();
   const [myOffers, setMyOffers] = useState([]);
   const [allRequests, setAllRequests] = useState([]);
@@ -328,6 +331,8 @@ const VolunteerPage = () => {
         )}
       </div>
 
+      <DemoContextBanner className="mb-6" />
+
       {/* People in Need — Map */}
       {(() => {
         const userLat = user?.location_lat ? parseFloat(user.location_lat) : null;
@@ -366,6 +371,7 @@ const VolunteerPage = () => {
               userLng={userLng}
               radiusKm={radiusKm}
               radiusLabel={selected.label}
+              contextLabel={demoEnabled ? demoRange.label : null}
               onUserClick={(clickedUserId, clickedUserName) => {
                 const parsedId = parseInt(clickedUserId);
                 const userPosts = allRequests.filter((r) => r.user_id === parsedId);
@@ -635,6 +641,7 @@ const VolunteerPage = () => {
       />
 
       <AISuggestionModal
+        key={demoEnabled ? 'historical-context' : 'current-context'}
         isOpen={showAISuggestionModal}
         mode="offer"
         onClose={() => setShowAISuggestionModal(false)}

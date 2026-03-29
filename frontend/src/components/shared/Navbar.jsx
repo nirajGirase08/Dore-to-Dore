@@ -230,14 +230,15 @@ const Navbar = () => {
             <div className="relative">
               <button
                 onClick={() => setBellOpen(!bellOpen)}
-                className="relative p-2 hover:bg-primary-700 rounded-lg transition-colors"
-                title="Notifications"
+                className="relative flex items-center gap-2 p-2 hover:bg-primary-700 rounded-lg transition-colors"
+                title="Alerts"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                   />
                 </svg>
+                <span className="text-sm font-medium">Alerts</span>
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                     {unreadCount > 9 ? '9+' : unreadCount}
@@ -251,7 +252,7 @@ const Navbar = () => {
                   <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl z-20 overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
                       <p className="text-sm font-semibold text-gray-700">
-                        Nearby Blockages {bellNotifications.length > 0 && `(${bellNotifications.length})`}
+                        Alerts {bellNotifications.length > 0 && `(${bellNotifications.length})`}
                       </p>
                       {bellNotifications.length > 0 && (
                         <button
@@ -264,11 +265,11 @@ const Navbar = () => {
                     </div>
                     <div className="max-h-72 overflow-y-auto">
                       {bellNotifications.length === 0 ? (
-                        <p className="text-sm text-gray-500 text-center py-6">No nearby blockage alerts</p>
+                        <p className="text-sm text-gray-500 text-center py-6">No active alerts</p>
                       ) : (
                         bellNotifications.map((n) => (
                           <div key={n.notification_id} className="flex items-start gap-3 px-4 py-3 border-b border-gray-100 hover:bg-gray-50">
-                            <span className="text-lg mt-0.5">🚧</span>
+                            <span className="text-lg mt-0.5">{n.notification_type === 'weather_alert' ? '🌩️' : '🚧'}</span>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-gray-800">{n.title}</p>
                               {n.message && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>}

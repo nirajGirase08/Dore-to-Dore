@@ -3,6 +3,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import BlockageCard from './BlockageCard';
 import { getBlockages } from '../../services/blockageService';
 
+const STORAGE_KEY = 'blockage_list_radius_km';
+
 const haversineKm = (lat1, lng1, lat2, lng2) => {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -32,7 +34,28 @@ const BlockageList = () => {
   const [blockages, setBlockages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({ blockage_type: '', severity: '', status: '', radiusKm: 1.60934 });
+  const [filters, setFilters] = useState(() => {
+    const storedRadius = window.localStorage.getItem(STORAGE_KEY);
+    const parsedRadius = storedRadius === null
+      ? 1.60934
+      : storedRadius === 'any'
+        ? null
+        : parseFloat(storedRadius);
+
+    return {
+      blockage_type: '',
+      severity: '',
+      status: '',
+      radiusKm: Number.isNaN(parsedRadius) ? 1.60934 : parsedRadius,
+    };
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      filters.radiusKm == null ? 'any' : String(filters.radiusKm)
+    );
+  }, [filters.radiusKm]);
 
   const fetchBlockages = async () => {
     setLoading(true);

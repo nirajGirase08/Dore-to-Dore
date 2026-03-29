@@ -7,6 +7,8 @@ import { getWeatherSummary } from './weatherService.js';
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:3b';
+const AI_BLOCKAGE_RADIUS_KM = 4.82802; // 3 miles
+const URGENCY_ORDER = ['low', 'medium', 'high', 'critical'];
 
 const summarizeHistory = (records, itemKey) => (
   records.slice(0, 5).map((record) => ({
@@ -22,7 +24,9 @@ const buildSystemPrompt = (mode) => `
 You are generating practical ${mode === 'offer' ? 'offer' : 'request'} suggestions for a crisis mutual-aid application.
 Return valid JSON only. No markdown.
 Be concrete, realistic, and concise.
-Use the provided context: user history, nearby conditions, weather, blockages, and nearby places.
+Use the provided context: user history, nearby conditions, weather window, blockages, and nearby places.
+If the weather context is forward-looking, make proactive suggestions.
+When the weather context includes freezing, ice, snow, heavy precipitation, or strong disruption indicators, do not return "low" urgency.
 Never invent unsafe claims.
 JSON schema:
 {
@@ -54,7 +58,44 @@ const parseJsonResponse = (text) => {
   return JSON.parse(trimmed.slice(start, end + 1));
 };
 
-export const buildSuggestionContext = async ({ user, mode, weatherMode, historicalDate }) => {
+const getMinimumUrgency = (context) => {
+  const tags = context.weather?.impact_summary?.risk_tags || [];
+  const blockages = context.nearby_blockages || [];
+
+  if (tags.includes('ice_risk') || blockages.length >= 5) {
+    return 'high';
+  }
+
+  if (
+    tags.includes('freezing_risk') ||
+    tags.includes('snow_impact_risk') ||
+    tags.includes('heavy_precipitation_risk') ||
+    tags.includes('high_wind_risk') ||
+    blockages.length >= 2
+  ) {
+    return 'medium';
+  }
+
+  return 'low';
+};
+
+const coerceUrgency = (suggestedUrgency, minimumUrgency) => {
+  const normalizedSuggested = URGENCY_ORDER.includes(suggestedUrgency) ? suggestedUrgency : 'medium';
+  const normalizedMinimum = URGENCY_ORDER.includes(minimumUrgency) ? minimumUrgency : 'low';
+
+  return URGENCY_ORDER.indexOf(normalizedSuggested) >= URGENCY_ORDER.indexOf(normalizedMinimum)
+    ? normalizedSuggested
+    : normalizedMinimum;
+};
+
+export const buildSuggestionContext = async ({
+  user,
+  mode,
+  weatherMode,
+  historicalDate,
+  startDate,
+  endDate,
+}) => {
   const lat = parseFloat(user.location_lat || 36.1447);
   const lng = parseFloat(user.location_lng || -86.8027);
 
@@ -69,8 +110,15 @@ export const buildSuggestionContext = async ({ user, mode, weatherMode, historic
       include: [{ model: RequestItem, as: 'items' }],
       order: [['created_at', 'DESC']],
     }),
-    getWeatherSummary({ lat, lng, mode: weatherMode, historicalDate }),
-    getNearbyBlockages({ lat, lng }),
+    getWeatherSummary({
+      lat,
+      lng,
+      mode: weatherMode,
+      historicalDate,
+      startDate,
+      endDate,
+    }),
+    getNearbyBlockages({ lat, lng, radiusKm: AI_BLOCKAGE_RADIUS_KM }),
     getNearbyPlaces({ lat, lng }),
   ]);
 
@@ -85,6 +133,13 @@ export const buildSuggestionContext = async ({ user, mode, weatherMode, historic
       lng,
     },
     weather,
+    weather_window: {
+      mode: weather.mode,
+      start_date: weather.date_range?.start_date || null,
+      end_date: weather.date_range?.end_date || null,
+      summary: weather.summary,
+      impact_summary: weather.impact_summary || null,
+    },
     nearby_blockages: nearbyBlockages.map((blockage) => ({
       blockage_type: blockage.blockage_type,
       severity: blockage.severity,
@@ -117,12 +172,13 @@ export const generateSuggestion = async ({ mode, context }) => {
 
   const data = await response.json();
   const parsed = parseJsonResponse(data.response || '');
+  const minimumUrgency = getMinimumUrgency(context);
 
   return {
     suggested_title: parsed.suggested_title || '',
     suggested_description: parsed.suggested_description || '',
     suggested_items: Array.isArray(parsed.suggested_items) ? parsed.suggested_items : [],
-    suggested_urgency: parsed.suggested_urgency || null,
+    suggested_urgency: coerceUrgency(parsed.suggested_urgency || null, minimumUrgency),
     reasoning_summary: parsed.reasoning_summary || '',
     safety_notes: Array.isArray(parsed.safety_notes) ? parsed.safety_notes : [],
   };

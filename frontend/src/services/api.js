@@ -311,6 +311,11 @@ export const aiAPI = {
     const response = await api.post('/ai/suggestions', payload);
     return response.data;
   },
+
+  getNewsSummary: async (payload) => {
+    const response = await api.post('/ai/news-summary', payload);
+    return response.data;
+  },
 };
 
 // ============================================
@@ -380,9 +385,13 @@ export const notificationsAPI = {
 // ============================================
 
 export const weatherAPI = {
-  // Developer 2: Add your weather API methods here
-  getAlerts: async () => {
-    const response = await api.get('/weather/alerts');
+  getAlerts: async (params) => {
+    const response = await api.get('/weather/alerts', { params });
+    return response.data;
+  },
+
+  getSummary: async (params) => {
+    const response = await api.get('/weather/summary', { params });
     return response.data;
   },
 };
