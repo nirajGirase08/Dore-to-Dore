@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    allowedHosts: ['reflector-quack-oblong.ngrok-free.dev'],
     proxy: {
       '/api': {
         target: 'http://localhost:5001',
