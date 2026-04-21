@@ -47,7 +47,6 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       setError(null);
-      setLoading(true);
 
       const response = await authAPI.login({ email, password });
 
@@ -68,15 +67,12 @@ export const AuthProvider = ({ children }) => {
       const errorMessage = err.message || err.response?.data?.error || 'Login failed';
       setError(errorMessage);
       return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
     }
   };
 
   const register = async (userData) => {
     try {
       setError(null);
-      setLoading(true);
 
       const response = await authAPI.register(userData);
 
@@ -97,8 +93,6 @@ export const AuthProvider = ({ children }) => {
       const errorMessage = err.message || err.response?.data?.error || 'Registration failed';
       setError(errorMessage);
       return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
     }
   };
 

@@ -45,15 +45,12 @@ const Dashboard = () => {
 
       <DemoContextBanner className="mb-6" />
 
-      {/* Top bar — buttons pinned to top right */}
-      <div className="flex items-center justify-between mb-8">
+      {/* Top bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-1">
+          <h1 className="text-2xl md:text-4xl font-bold text-[#181511] mb-1">
             Welcome, {user?.name}!
           </h1>
-          {/* <p className="text-lg text-gray-600">
-            How would you like to help the Vanderbilt community today?
-          </p> */}
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">
@@ -78,7 +75,11 @@ const Dashboard = () => {
             onClick={() => setShowNewsSummaryModal(true)}
             className="flex items-center gap-2 rounded-xl bg-[#e9e0cf] hover:bg-[#dccca9] px-4 py-2.5 text-[#181511] font-semibold text-sm shadow-md transition-colors"
           >
-            <span>Get AI Summarized News</span>
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+            </svg>
+            <span className="hidden sm:inline">AI News</span>
+            <span className="sm:hidden">News</span>
           </button>
         </div>
       </div>
@@ -152,8 +153,8 @@ const Dashboard = () => {
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Nashville Crisis Map</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <h2 className="text-2xl font-bold text-[#181511]">Nashville Crisis Map</h2>
+            <p className="text-sm text-[#7c6248] mt-1">
               Active road hazards · Updates every 30 seconds
               {demoEnabled ? ` · Weather window ${demoRange.startDate} to ${demoRange.endDate}` : ''}
             </p>
@@ -185,6 +186,9 @@ const Dashboard = () => {
           </span>
           <span className="flex items-center gap-1.5">
             <span>🩺</span> Urgent Care / Clinic
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span>🏠</span> Emergency Shelter
           </span>
         </div>
       </div>

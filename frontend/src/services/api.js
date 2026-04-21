@@ -2,9 +2,10 @@ import axios from 'axios';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
   },
 });
 
@@ -43,7 +44,7 @@ api.interceptors.response.use(
       return Promise.reject(err);
     } else if (error.request) {
       // Request made but no response received
-      const err = new Error('Backend server is not responding. Please make sure the server is running on http://localhost:5001');
+      const err = new Error('Unable to reach the server. Please check your connection and try again.');
       err.request = error.request;
       return Promise.reject(err);
     } else {
@@ -347,6 +348,10 @@ export const ridesAPI = {
   },
   getById: async (id) => {
     const response = await api.get(`/rides/${id}`);
+    return response.data;
+  },
+  getRoutes: async (id) => {
+    const response = await api.get(`/rides/${id}/routes`);
     return response.data;
   },
   accept: async (id) => {

@@ -58,10 +58,13 @@ router.post('/', authenticate, async (req, res) => {
       status: 'pending',
     });
 
-    const requester = await User.findByPk(req.userId, { attributes: ['name'] });
-    await broadcastRideNotification(ride, requester?.name || 'Someone');
-
     res.status(201).json({ success: true, data: ride });
+
+    // Notify other users in the background — don't block the response
+    setImmediate(async () => {
+      const requester = await User.findByPk(req.userId, { attributes: ['name'] }).catch(() => null);
+      await broadcastRideNotification(ride, requester?.name || 'Someone');
+    });
   } catch (err) {
     console.error('Create ride error:', err);
     res.status(500).json({ success: false, error: 'Failed to create support ride request.' });
@@ -119,7 +122,7 @@ router.get('/driving', authenticate, async (req, res) => {
   }
 });
 
-// GET /api/rides/:id — single ride + computed routes
+// GET /api/rides/:id — single ride (no routes, responds instantly)
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const ride = await RideRequest.findByPk(req.params.id, {
@@ -129,31 +132,42 @@ router.get('/:id', authenticate, async (req, res) => {
       ],
     });
 
-    if (!ride) {
-      return res.status(404).json({ success: false, error: 'Ride request not found.' });
-    }
+    if (!ride) return res.status(404).json({ success: false, error: 'Ride request not found.' });
 
-    // Only the requester or driver can see details
     if (ride.requester_id !== req.userId && ride.driver_id !== req.userId) {
       return res.status(403).json({ success: false, error: 'Access denied.' });
     }
 
-    let routes = null;
-    try {
-      routes = await computeRoutes(
-        parseFloat(ride.pickup_lat),
-        parseFloat(ride.pickup_lng),
-        parseFloat(ride.destination_lat),
-        parseFloat(ride.destination_lng),
-      );
-    } catch (routeErr) {
-      console.error('Route computation failed:', routeErr.message);
-    }
-
-    res.json({ success: true, data: { ...ride.toJSON(), routes } });
+    res.json({ success: true, data: ride.toJSON() });
   } catch (err) {
     console.error('Get ride error:', err);
     res.status(500).json({ success: false, error: 'Failed to fetch ride.' });
+  }
+});
+
+// GET /api/rides/:id/routes — route computation (separate, slow endpoint)
+router.get('/:id/routes', authenticate, async (req, res) => {
+  try {
+    const ride = await RideRequest.findByPk(req.params.id, {
+      attributes: ['ride_request_id', 'requester_id', 'driver_id', 'pickup_lat', 'pickup_lng', 'destination_lat', 'destination_lng'],
+    });
+
+    if (!ride) return res.status(404).json({ success: false, error: 'Ride not found.' });
+    if (ride.requester_id !== req.userId && ride.driver_id !== req.userId) {
+      return res.status(403).json({ success: false, error: 'Access denied.' });
+    }
+
+    const routes = await computeRoutes(
+      parseFloat(ride.pickup_lat),
+      parseFloat(ride.pickup_lng),
+      parseFloat(ride.destination_lat),
+      parseFloat(ride.destination_lng),
+    );
+
+    res.json({ success: true, data: routes });
+  } catch (err) {
+    console.error('Route computation failed:', err.message);
+    res.status(500).json({ success: false, error: 'Route computation failed.' });
   }
 });
 
@@ -168,9 +182,10 @@ router.patch('/:id/accept', authenticate, async (req, res) => {
 
     await ride.update({ driver_id: req.userId, status: 'accepted', accepted_at: new Date(), updated_at: new Date() });
 
-    // Dismiss ride_request notifications for all users (non-blocking)
+    // Both notification tasks are non-blocking so they never cause a 500 if they fail
     setImmediate(async () => {
       try {
+        // Dismiss ride_request notifications for all users
         await Notification.update(
           { is_read: true, is_dismissed: true },
           { where: { related_id: ride.ride_request_id, notification_type: 'ride_request', is_dismissed: false } }
@@ -178,17 +193,21 @@ router.patch('/:id/accept', authenticate, async (req, res) => {
       } catch (err) {
         console.error('Failed to dismiss ride notifications:', err);
       }
-    });
 
-    // Notify the requester
-    const driver = await User.findByPk(req.userId, { attributes: ['name'] });
-    await Notification.create({
-      user_id:           ride.requester_id,
-      notification_type: 'ride_accepted',
-      title:             'Your support ride was accepted',
-      message:           `${driver?.name || 'A Commodore'} accepted your support ride request and is on the way.`,
-      related_id:        ride.ride_request_id,
-      severity:          'high',
+      try {
+        // Notify the requester that their ride was accepted
+        const driver = await User.findByPk(req.userId, { attributes: ['name'] });
+        await Notification.create({
+          user_id:           ride.requester_id,
+          notification_type: 'ride_accepted',
+          title:             'Your support ride was accepted',
+          message:           `${driver?.name || 'A Commodore'} accepted your support ride request and is on the way.`,
+          related_id:        ride.ride_request_id,
+          severity:          'high',
+        });
+      } catch (err) {
+        console.error('Failed to create ride_accepted notification:', err);
+      }
     });
 
     const updatedRide = await RideRequest.findByPk(ride.ride_request_id, {

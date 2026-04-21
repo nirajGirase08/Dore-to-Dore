@@ -194,7 +194,14 @@ export const computeRoutes = async (pickupLat, pickupLng, destLat, destLng) => {
     `${OSRM_BASE}/${pickupLng},${pickupLat};${destLng},${destLat}` +
     `?overview=full&geometries=geojson&alternatives=3&steps=true`;
 
-  const response = await fetch(url);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout
+  let response;
+  try {
+    response = await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!response.ok) throw new Error(`OSRM error: ${response.status}`);
 
   const data = await response.json();

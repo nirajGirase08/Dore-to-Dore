@@ -62,18 +62,70 @@ const fetchMedicalFacilities = async (map) => {
   }
 };
 
+const fetchShelters = async (map) => {
+  try {
+    const res = await fetch('/api/shelters');
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const { data } = await res.json();
+    if (!data?.length) return;
+
+    const shelterIcon = makeMedicalIcon('🏠', '#7c3aed');
+
+    data.forEach((shelter) => {
+      L.marker([shelter.lat, shelter.lng], { icon: shelterIcon })
+        .addTo(map)
+        .bindPopup(
+          `<div style="min-width:160px">
+            <p style="font-weight:700;margin:0 0 3px">🏠 ${shelter.name}</p>
+            <p style="font-size:12px;color:#7c3aed;font-weight:600;margin:0 0 3px">Emergency Shelter</p>
+            ${shelter.address ? `<p style="font-size:12px;color:#6b7280;margin:0 0 3px">${shelter.address}</p>` : ''}
+            ${shelter.capacity ? `<p style="font-size:12px;margin:0 0 3px">Capacity: ${shelter.capacity}</p>` : ''}
+            ${shelter.phone   ? `<p style="font-size:12px;margin:0">Phone: ${shelter.phone}</p>` : ''}
+          </div>`
+        );
+    });
+  } catch (err) {
+    console.error('Shelters error:', err.message);
+  }
+};
+
 const MapView = ({ contextLabel = null }) => {
   const { user } = useAuth();
   const mapRef        = useRef(null);
   const leafletRef    = useRef(null);
   const blockageLayer = useRef({});
   const impactZoneRef = useRef(null);
+  const gpsMarkerRef  = useRef(null);
   const pollTimer     = useRef(null);
   const [loading, setLoading] = useState(true);
+  const [gpsStatus, setGpsStatus] = useState(null); // null | 'locating' | 'ok' | 'denied'
   const { weatherSummary, overlayStyle, showImpactZone } = useWeatherOverlay(user);
 
   const userLat = user?.location_lat ? parseFloat(user.location_lat) : NASHVILLE[0];
   const userLng = user?.location_lng ? parseFloat(user.location_lng) : NASHVILLE[1];
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      setGpsStatus('denied');
+      return;
+    }
+    setGpsStatus('locating');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsStatus('ok');
+        const map = leafletRef.current;
+        if (!map) return;
+        const { latitude: lat, longitude: lng } = pos.coords;
+        if (gpsMarkerRef.current) gpsMarkerRef.current.remove();
+        gpsMarkerRef.current = L.circleMarker([lat, lng], {
+          radius: 10, color: '#fff', weight: 3, fillColor: '#0ea5e9', fillOpacity: 1,
+        }).addTo(map).bindPopup('<p style="font-weight:700;margin:0">Your GPS location</p>');
+        map.setView([lat, lng], 14);
+      },
+      () => setGpsStatus('denied'),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const syncBlockages = async (map) => {
     try {
@@ -143,8 +195,9 @@ const MapView = ({ contextLabel = null }) => {
         }`
       );
 
-    // Permanent medical facility markers (never removed)
+    // Permanent markers (never removed on poll)
     fetchMedicalFacilities(map);
+    fetchShelters(map);
 
     // Blockages — initial load + poll every 30 s
     syncBlockages(map);
@@ -188,6 +241,27 @@ const MapView = ({ contextLabel = null }) => {
         contextLabel={contextLabel}
       />
       <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
+
+      {/* GPS location button */}
+      <button
+        onClick={handleUseMyLocation}
+        disabled={gpsStatus === 'locating'}
+        title={gpsStatus === 'denied' ? 'Location access denied — check browser settings' : 'Use my GPS location'}
+        className={`absolute bottom-3 right-3 z-[1000] flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-lg transition-colors ${
+          gpsStatus === 'denied'
+            ? 'bg-red-50 text-red-700 border border-red-200'
+            : gpsStatus === 'ok'
+            ? 'bg-green-50 text-green-700 border border-green-200'
+            : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+        }`}
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+          />
+        </svg>
+        {gpsStatus === 'locating' ? 'Locating…' : gpsStatus === 'denied' ? 'Location denied' : gpsStatus === 'ok' ? 'GPS active' : 'Use my location'}
+      </button>
 
       {loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-60 rounded-2xl">

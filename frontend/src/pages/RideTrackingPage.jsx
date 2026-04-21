@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { ridesAPI } from '../services/api';
+import { ridesAPI, conversationsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
 const STATUS_STEPS = ['pending', 'accepted', 'en_route', 'picked_up', 'completed'];
@@ -24,8 +24,11 @@ const RideTrackingPage = () => {
 
   const [ride, setRide] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [routes, setRoutes] = useState(null);
+  const [routesLoading, setRoutesLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
 
   const mapRef = useRef(null);
   const leafletRef = useRef(null);
@@ -43,10 +46,22 @@ const RideTrackingPage = () => {
     }
   };
 
+  const fetchRoutes = async () => {
+    try {
+      const response = await ridesAPI.getRoutes(rideId);
+      setRoutes(response.data);
+    } catch {
+      // routes are optional — fail silently
+    } finally {
+      setRoutesLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchRide();
-    const interval = setInterval(fetchRide, 4000);
-    return () => clearInterval(interval);
+    fetchRoutes();
+    const rideInterval = setInterval(fetchRide, 4000);
+    return () => clearInterval(rideInterval);
   }, [rideId]);
 
   // Build / update map
@@ -88,8 +103,8 @@ const RideTrackingPage = () => {
     }).addTo(map).bindPopup(`<b>Destination</b><br>${ride.destination_address || ''}`);
 
     // Draw routes
-    if (ride.routes?.length) {
-      ride.routes.forEach((route, idx) => {
+    if (routes?.length) {
+      routes.forEach((route, idx) => {
         const coords = route.geometry.coordinates.map(([lng, lat]) => [lat, lng]);
         const isBest = idx === 0;
         L.polyline(coords, {
@@ -118,7 +133,7 @@ const RideTrackingPage = () => {
       map.fitBounds([[pickupLat, pickupLng], [destLat, destLng]], { padding: [40, 40] });
       boundsSetRef.current = true;
     }
-  }, [ride]);
+  }, [ride, routes]);
 
   useEffect(() => {
     return () => {
@@ -144,6 +159,25 @@ const RideTrackingPage = () => {
     }
   };
 
+  const handleOpenChat = async () => {
+    const otherUserId = isRequester ? ride.driver_id : ride.requester_id;
+    if (!otherUserId) return;
+    setChatLoading(true);
+    try {
+      const result = await conversationsAPI.createOrGet(otherUserId);
+      const convId = result?.data?.conversation_id || result?.conversation_id;
+      if (convId) {
+        navigate(`/messages/${convId}`);
+      } else {
+        navigate('/messages');
+      }
+    } catch {
+      navigate('/messages');
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   if (loading) return (
     <div className="container-custom py-8 flex items-center justify-center min-h-[400px]">
       <div className="text-center">
@@ -164,10 +198,14 @@ const RideTrackingPage = () => {
   const isRequester = ride.requester_id === user?.user_id;
   const isDriver    = ride.driver_id    === user?.user_id;
   const statusInfo  = STATUS_LABELS[ride.status] || STATUS_LABELS.pending;
-  const bestRoute   = ride.routes?.[0];
+  const bestRoute   = routes?.[0];
+  const otherPerson = isRequester ? ride.driver : ride.requester;
+  const canChat     = !!otherPerson && ['accepted', 'en_route', 'picked_up'].includes(ride.status);
 
   return (
     <div className="container-custom py-8 max-w-4xl mx-auto">
+
+      {/* Header */}
       <div className="mb-6 flex items-center gap-4">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -179,6 +217,60 @@ const RideTrackingPage = () => {
         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${URGENCY_COLORS[ride.urgency]}`}>
           {ride.urgency}
         </span>
+      </div>
+
+      {/* Commodore Helper / Community Member — TOP */}
+      <div className="card mb-6">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h3 className="font-semibold text-gray-700 text-lg">
+            {isRequester ? 'Your Commodore Helper' : 'Community Member'}
+          </h3>
+          {canChat && (
+            <button
+              onClick={handleOpenChat}
+              disabled={chatLoading}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#e9e0cf] hover:bg-[#dccca9] text-[#181511] font-semibold text-sm transition-colors disabled:opacity-50"
+            >
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              {chatLoading ? 'Opening…' : 'Chat'}
+            </button>
+          )}
+        </div>
+
+        <div className="mt-3">
+          {isRequester ? (
+            otherPerson ? (
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-lg flex-shrink-0">
+                  {otherPerson.name?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-800">{otherPerson.name}</p>
+                  {otherPerson.phone && <p className="text-sm text-gray-500">{otherPerson.phone}</p>}
+                  <p className="text-xs text-green-600 font-medium mt-0.5">Commodore volunteer</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">No Commodore yet — waiting for someone to accept</p>
+            )
+          ) : (
+            otherPerson ? (
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg flex-shrink-0">
+                  {otherPerson.name?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-800">{otherPerson.name}</p>
+                  {otherPerson.phone && <p className="text-sm text-gray-500">{otherPerson.phone}</p>}
+                  <p className="text-xs text-blue-600 font-medium mt-0.5">Community member</p>
+                </div>
+              </div>
+            ) : null
+          )}
+        </div>
       </div>
 
       {/* Status banner */}
@@ -196,6 +288,46 @@ const RideTrackingPage = () => {
           {ride.status === 'pending' && <p className="text-sm text-black">Nearby Commodores have been notified.</p>}
         </div>
       </div>
+
+      {/* Commodore action buttons — shown right after status for driver */}
+      {isDriver && (
+        <div className="flex flex-wrap gap-3 mb-6">
+          {ride.status === 'accepted' && (
+            <button onClick={() => handleStatusUpdate('en_route')} disabled={updatingStatus}
+              className="btn-primary bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
+              I'm on my way
+            </button>
+          )}
+          {ride.status === 'en_route' && (
+            <button onClick={() => handleStatusUpdate('picked_up')} disabled={updatingStatus}
+              className="btn-primary bg-purple-600 hover:bg-purple-700 disabled:opacity-50">
+              Community member picked up
+            </button>
+          )}
+          {ride.status === 'picked_up' && (
+            <button onClick={() => handleStatusUpdate('completed')} disabled={updatingStatus}
+              className="btn-primary bg-green-600 hover:bg-green-700 disabled:opacity-50">
+              Support ride completed
+            </button>
+          )}
+          {['accepted', 'en_route'].includes(ride.status) && (
+            <button onClick={() => handleStatusUpdate('cancelled')} disabled={updatingStatus}
+              className="px-4 py-2 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50">
+              Cancel support ride
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Requester cancel button */}
+      {isRequester && ride.status === 'pending' && (
+        <div className="mb-6">
+          <button onClick={() => handleStatusUpdate('cancelled')} disabled={updatingStatus}
+            className="px-4 py-2 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50">
+            Cancel support request
+          </button>
+        </div>
+      )}
 
       {/* Rerouting / hazard banners */}
       {bestRoute?.rerouted_due_to_hazard && (
@@ -239,12 +371,18 @@ const RideTrackingPage = () => {
       )}
 
       {/* Map */}
-      <div className="rounded-2xl overflow-hidden shadow-lg border border-gray-200 mb-6 h-52 md:h-72 lg:h-[380px]">
+      <div className="relative rounded-2xl overflow-hidden shadow-lg border border-gray-200 mb-4 h-52 md:h-72 lg:h-[380px]">
         <div ref={mapRef} style={{ height: '100%', width: '100%' }} />
+        {routesLoading && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 text-xs text-gray-500 px-3 py-1 rounded-full shadow flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+            Computing routes…
+          </div>
+        )}
       </div>
 
       {/* Route legend */}
-      {ride.routes?.length > 0 && (
+      {routes?.length > 0 && (
         <div className="flex flex-wrap gap-4 mb-6 text-xs text-gray-600">
           <span className="flex items-center gap-1.5"><span className="inline-block w-4 h-1 rounded bg-blue-500"></span> Best route</span>
           <span className="flex items-center gap-1.5"><span className="inline-block w-4 h-1 rounded bg-orange-400"></span> Route with hazards</span>
@@ -255,95 +393,27 @@ const RideTrackingPage = () => {
         </div>
       )}
 
-      {/* Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="card">
-          <h3 className="font-semibold text-gray-700 mb-2">Trip Details</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-start gap-2">
-              <span className="text-green-600 mt-0.5">Pickup</span>
-              <div><p className="text-xs text-gray-500">Pickup</p><p className="font-medium">{ride.pickup_address || 'Unknown'}</p></div>
-            </div>
-            <div className="flex items-start gap-2">
-              <span className="text-red-600 mt-0.5">Destination</span>
-              <div><p className="text-xs text-gray-500">Destination</p><p className="font-medium">{ride.destination_address || 'Unknown'}</p></div>
-            </div>
-            {ride.notes && (
-              <div className="flex items-start gap-2">
-                <span className="mt-0.5">Notes</span>
-                <div><p className="text-xs text-gray-500">Notes</p><p>{ride.notes}</p></div>
-              </div>
-            )}
+      {/* Trip Details */}
+      <div className="card mb-6">
+        <h3 className="font-semibold text-gray-700 mb-3">Trip Details</h3>
+        <div className="space-y-2 text-sm">
+          <div className="flex items-start gap-2">
+            <span className="text-green-600 mt-0.5 flex-shrink-0">●</span>
+            <div><p className="text-xs text-gray-500">Pickup</p><p className="font-medium">{ride.pickup_address || 'Unknown'}</p></div>
           </div>
-        </div>
-
-        <div className="card">
-          <h3 className="font-semibold text-gray-700 mb-2">{isRequester ? 'Your Commodore Helper' : 'Community Member'}</h3>
-          {isRequester ? (
-            ride.driver ? (
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold">
-                  {ride.driver.name?.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-semibold">{ride.driver.name}</p>
-                  {ride.driver.phone && <p className="text-sm text-gray-500">{ride.driver.phone}</p>}
-                </div>
-              </div>
-            ) : <p className="text-gray-500 text-sm">No Commodore yet — waiting for someone to accept</p>
-          ) : (
-            ride.requester && (
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">
-                  {ride.requester.name?.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-semibold">{ride.requester.name}</p>
-                  {ride.requester.phone && <p className="text-sm text-gray-500">{ride.requester.phone}</p>}
-                </div>
-              </div>
-            )
+          <div className="flex items-start gap-2">
+            <span className="text-red-600 mt-0.5 flex-shrink-0">●</span>
+            <div><p className="text-xs text-gray-500">Destination</p><p className="font-medium">{ride.destination_address || 'Unknown'}</p></div>
+          </div>
+          {ride.notes && (
+            <div className="flex items-start gap-2">
+              <span className="mt-0.5 flex-shrink-0">📝</span>
+              <div><p className="text-xs text-gray-500">Notes</p><p>{ride.notes}</p></div>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Commodore action buttons */}
-      {isDriver && (
-        <div className="flex flex-wrap gap-3">
-          {ride.status === 'accepted' && (
-            <button onClick={() => handleStatusUpdate('en_route')} disabled={updatingStatus}
-              className="btn-primary bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
-              I'm on my way
-            </button>
-          )}
-          {ride.status === 'en_route' && (
-            <button onClick={() => handleStatusUpdate('picked_up')} disabled={updatingStatus}
-              className="btn-primary bg-purple-600 hover:bg-purple-700 disabled:opacity-50">
-              Community member picked up
-            </button>
-          )}
-          {ride.status === 'picked_up' && (
-            <button onClick={() => handleStatusUpdate('completed')} disabled={updatingStatus}
-              className="btn-primary bg-green-600 hover:bg-green-700 disabled:opacity-50">
-              Support ride completed
-            </button>
-          )}
-          {['accepted', 'en_route'].includes(ride.status) && (
-            <button onClick={() => handleStatusUpdate('cancelled')} disabled={updatingStatus}
-              className="px-4 py-2 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50">
-              Cancel support ride
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Requester cancel button */}
-      {isRequester && ride.status === 'pending' && (
-        <button onClick={() => handleStatusUpdate('cancelled')} disabled={updatingStatus}
-          className="px-4 py-2 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50">
-          Cancel support request
-        </button>
-      )}
     </div>
   );
 };

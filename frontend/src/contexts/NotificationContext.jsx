@@ -36,8 +36,11 @@ export const NotificationProvider = ({ children }) => {
       setWeatherAlerts(weatherIncoming);
 
       const toastableNotifs = [
+        ...incoming.filter((n) => n.notification_type === 'blockage_alert'),   // critical/high — ALL users
         ...incoming.filter((n) => n.notification_type === 'blockage_nearby'),
         ...incoming.filter((n) => n.notification_type === 'ride_request'),
+        ...incoming.filter((n) => n.notification_type === 'ride_accepted'),
+        ...incoming.filter((n) => n.notification_type === 'ride_status'),
         ...weatherIncoming,
       ];
       const newOnes = toastableNotifs.filter((n) => !shownToastIds.current.has(n.notification_id));
@@ -75,7 +78,7 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     if (loading || !isAuthenticated) return;
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
+    const interval = setInterval(fetchNotifications, 10000);
     return () => clearInterval(interval);
   }, [isAuthenticated, loading, fetchNotifications]);
 
@@ -124,10 +127,12 @@ export const NotificationProvider = ({ children }) => {
 
   const bellNotifications = [
     ...weatherAlerts,
-    // Everything except blockage_alert (→ AlertBanner) and ride_request (→ toast with action buttons)
+    // Exclude alert banner types and toast-only types
     ...notifications.filter((n) =>
       n.notification_type !== 'blockage_alert' &&
-      n.notification_type !== 'ride_request'
+      n.notification_type !== 'ride_request' &&
+      n.notification_type !== 'ride_accepted' &&
+      n.notification_type !== 'ride_status'
     ),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 

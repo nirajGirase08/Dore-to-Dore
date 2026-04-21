@@ -63,35 +63,36 @@ const MessageBanner = () => {
   }
 
   return (
-    <div className="border-b border-cyan-200 bg-cyan-50">
-      <div className="container-custom py-3">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-cyan-950">
+    <div className="fixed top-20 right-4 z-50 w-80 max-w-[calc(100vw-2rem)] animate-slide-in">
+      <div className="bg-white shadow-2xl rounded-xl border border-gray-200 border-l-4 border-l-cyan-500 p-4">
+        <div className="flex items-start gap-3">
+          <span className="text-xl flex-shrink-0">💬</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-800">
               New message from {bannerMessage.sender?.name || bannerMessage.other_user?.name || 'a user'}
             </p>
-            <p className="truncate text-sm text-cyan-900">
+            <p className="truncate text-xs text-gray-500 mt-0.5">
               {bannerMessage.message_text}
             </p>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => {
+                  setBannerMessage(null);
+                  navigate(`/messages/${bannerMessage.conversation_id}`);
+                }}
+                className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold py-1.5 rounded-md transition-colors"
+              >
+                Open
+              </button>
+              <button
+                onClick={() => setBannerMessage(null)}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-1.5 rounded-md transition-colors"
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setBannerMessage(null);
-                navigate(`/messages/${bannerMessage.conversation_id}`);
-              }}
-              className="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-800"
-            >
-              Open Message
-            </button>
-            <button
-              onClick={() => setBannerMessage(null)}
-              className="rounded-lg border border-cyan-300 px-4 py-2 text-sm font-semibold text-cyan-950 transition-colors hover:bg-cyan-100"
-            >
-              Dismiss
-            </button>
-          </div>
+          <button onClick={() => setBannerMessage(null)} className="flex-shrink-0 text-gray-400 hover:text-gray-600 text-xl leading-none mt-0.5" aria-label="Dismiss">×</button>
         </div>
       </div>
     </div>

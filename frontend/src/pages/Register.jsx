@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AddressAutocomplete from '../components/shared/AddressAutocomplete';
+import vandyLogo from '../../../images/vandy_logo.png';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -36,7 +37,6 @@ const Register = () => {
     setError('');
     setLoading(true);
 
-    // Validation
     if (!formData.name || !formData.email || !formData.password) {
       setError('Please fill in all required fields');
       setLoading(false);
@@ -55,7 +55,6 @@ const Register = () => {
       return;
     }
 
-    // Prepare data for API
     const { confirmPassword, ...registrationData } = formData;
 
     const result = await register(registrationData);
@@ -70,43 +69,68 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 to-primary-700 px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-xl p-8">
-          {/* Logo/Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Account</h1>
-            <p className="text-gray-600">Join the Vanderbilt Dore-to-Dore community</p>
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#f8f4ec] px-4 py-12">
+      {/* Background accent */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-[#b49248]/10" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-[#b49248]/8" />
+      </div>
 
-          {/* Error message */}
+      <div className="relative w-full max-w-md">
+        {/* Brand header */}
+        <div className="text-center mb-8">
+          <img src={vandyLogo} alt="Vanderbilt" className="h-10 w-auto mx-auto mb-4 object-contain" />
+          <h1 className="text-4xl font-bold text-[#181511] mb-1">Join Dore-to-Dore</h1>
+          <p className="text-[#7c6248] text-sm">Create your Vanderbilt community account</p>
+        </div>
+
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-[#e7dccb] p-8">
+          <h2 className="text-xl font-semibold text-[#181511] mb-6">Account Details</h2>
+
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+            <div className="mb-5 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
               {error}
             </div>
           )}
 
-          {/* Register form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="John Doe"
-                required
-              />
+            {/* Name + Email row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-[#181511] mb-1.5">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="input-field"
+                  placeholder="Jane Doe"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-[#181511] mb-1.5">
+                  Phone <span className="text-[#7c6248] font-normal">(optional)</span>
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="input-field"
+                  placeholder="(615) 555-1234"
+                />
+              </div>
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address *
+              <label htmlFor="email" className="block text-sm font-medium text-[#181511] mb-1.5">
+                Email Address <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -115,90 +139,79 @@ const Register = () => {
                 value={formData.email}
                 onChange={handleChange}
                 className="input-field"
-                placeholder="john.doe@vanderbilt.edu"
+                placeholder="jane.doe@vanderbilt.edu"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password * (min. 6 characters)
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="••••••••"
-                required
-              />
+            {/* Password row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-[#181511] mb-1.5">
+                  Password <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="input-field"
+                  placeholder="min. 6 chars"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#181511] mb-1.5">
+                  Confirm Password <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="input-field"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                Confirm Password *
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number (optional)
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="input-field"
-                placeholder="(615) 555-1234"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
-                Gender
-              </label>
-              <select
-                id="gender"
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-                className="input-field"
-              >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="prefer_not_to_answer">Prefer not to answer</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="user_type" className="block text-sm font-medium text-gray-700 mb-1">
-                User Type
-              </label>
-              <select
-                id="user_type"
-                name="user_type"
-                value={formData.user_type}
-                onChange={handleChange}
-                className="input-field"
-              >
-                <option value="student">Student</option>
-                <option value="staff">Staff</option>
-                <option value="faculty">Faculty</option>
-              </select>
+            {/* Gender + User type row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="gender" className="block text-sm font-medium text-[#181511] mb-1.5">
+                  Gender
+                </label>
+                <select
+                  id="gender"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="input-field"
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="prefer_not_to_answer">Prefer not to answer</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="user_type" className="block text-sm font-medium text-[#181511] mb-1.5">
+                  Affiliation
+                </label>
+                <select
+                  id="user_type"
+                  name="user_type"
+                  value={formData.user_type}
+                  onChange={handleChange}
+                  className="input-field"
+                >
+                  <option value="student">Student</option>
+                  <option value="staff">Staff</option>
+                  <option value="faculty">Faculty</option>
+                </select>
+              </div>
             </div>
 
             <AddressAutocomplete
@@ -213,18 +226,17 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full mt-6"
+              className="btn-primary w-full mt-2"
             >
-              {loading ? 'Creating account...' : 'Register'}
+              {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
 
-          {/* Login link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+          <div className="mt-6 pt-5 border-t border-[#e7dccb] text-center">
+            <p className="text-sm text-[#7c6248]">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-                Log in here
+              <Link to="/login" className="text-[#a1842f] hover:text-[#6c5b20] font-semibold">
+                Sign in here
               </Link>
             </p>
           </div>

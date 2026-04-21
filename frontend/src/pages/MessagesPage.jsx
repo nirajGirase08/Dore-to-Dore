@@ -76,12 +76,14 @@ const MessagesPage = () => {
   }
 
   return (
-    <div className="container-custom py-8">
-      <div className="flex flex-col md:flex-row gap-6 min-h-[500px] h-[calc(100vh-200px)] max-h-[800px]">
+    <div className="container-custom py-4 md:py-8">
+      <div className="flex flex-col md:flex-row gap-6 min-h-[500px] md:max-h-[800px]"
+        style={{ height: 'calc(100dvh - 180px)' }}
+      >
         {/* Conversations List */}
         <div className={`${selectedConversation ? 'hidden md:block' : 'block'} w-full md:w-1/3 card overflow-y-auto`}>
           <div className="mb-4 pb-4 border-b">
-            <h2 className="text-2xl font-bold text-gray-800">Messages</h2>
+            <h2 className="text-2xl font-bold text-[#181511]">Messages</h2>
             <p className="text-sm text-gray-600 mt-1">
               {conversations.length} conversation{conversations.length !== 1 ? 's' : ''}
             </p>
