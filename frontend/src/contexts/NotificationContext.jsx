@@ -43,7 +43,15 @@ export const NotificationProvider = ({ children }) => {
         ...incoming.filter((n) => n.notification_type === 'ride_status'),
         ...weatherIncoming,
       ];
-      const newOnes = toastableNotifs.filter((n) => !shownToastIds.current.has(n.notification_id));
+      // Only toast notifications created within the last 5 minutes to prevent
+      // old unread notifications from re-appearing as toasts after a page refresh.
+      const TOAST_WINDOW_MS = 5 * 60 * 1000;
+      const recentCutoff = Date.now() - TOAST_WINDOW_MS;
+      const newOnes = toastableNotifs.filter((n) => {
+        if (shownToastIds.current.has(n.notification_id)) return false;
+        const createdAt = n.created_at ? new Date(n.created_at).getTime() : 0;
+        return createdAt > recentCutoff;
+      });
       newOnes.forEach((n) => shownToastIds.current.add(n.notification_id));
 
       // IDs of ride_request notifications still active (not yet accepted)

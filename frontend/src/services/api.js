@@ -1,5 +1,20 @@
 import axios from 'axios';
 
+// Strips /api suffix from VITE_API_URL to get the backend origin.
+// If VITE_API_URL is not set, BACKEND_BASE is '' so paths stay relative (Vite proxy handles them).
+const BACKEND_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '');
+
+/**
+ * Resolves an uploaded-file path to a full URL.
+ * - Absolute URLs (http/https) and blob: URLs pass through unchanged.
+ * - Relative paths (e.g. /uploads/offers/foo.jpg) are prefixed with BACKEND_BASE.
+ */
+export const resolveImageUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith('http') || path.startsWith('blob:')) return path;
+  return BACKEND_BASE + path;
+};
+
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',

@@ -158,6 +158,17 @@ const NeedHelpPage = () => {
     setEditingRequest(request);
   };
 
+  const handleDeleteRequest = async (request) => {
+    if (!window.confirm('Delete this request? This cannot be undone.')) return;
+    try {
+      await requestsAPI.delete(request.request_id);
+      setMyRequests((prev) => prev.filter((r) => r.request_id !== request.request_id));
+    } catch (err) {
+      console.error('Failed to delete request:', err);
+      alert('Failed to delete. Please try again.');
+    }
+  };
+
   const handleViewRequest = (request) => {
     navigate(`/requests/${request.request_id}`);
   };
@@ -445,7 +456,7 @@ const NeedHelpPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredActiveRequests.map((request) => (
                         <RequestCard key={request.request_id} request={request} showContact={false}
-                          onEdit={handleEditRequest} onFulfillItem={handleFulfillRequestItem} onView={handleViewRequest} />
+                          onEdit={handleEditRequest} onDelete={handleDeleteRequest} onFulfillItem={handleFulfillRequestItem} onView={handleViewRequest} />
                       ))}
                     </div>
                   </div>
@@ -459,7 +470,7 @@ const NeedHelpPage = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredFulfilledRequests.map((request) => (
-                        <RequestCard key={request.request_id} request={request} showContact={false} onView={handleViewRequest} />
+                        <RequestCard key={request.request_id} request={request} showContact={false} onDelete={handleDeleteRequest} onView={handleViewRequest} />
                       ))}
                     </div>
                   </div>
@@ -473,7 +484,7 @@ const NeedHelpPage = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredOtherRequests.map((request) => (
-                        <RequestCard key={request.request_id} request={request} showContact={false} onView={handleViewRequest} />
+                        <RequestCard key={request.request_id} request={request} showContact={false} onDelete={handleDeleteRequest} onView={handleViewRequest} />
                       ))}
                     </div>
                   </div>

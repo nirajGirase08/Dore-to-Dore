@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { resolveImageUrl } from '../../services/api';
 import vandyLogo from '../../../../images/vandy_logo.png';
 
 const Navbar = () => {
@@ -26,8 +27,8 @@ const Navbar = () => {
   /* Bell dropdown — shared between mobile and desktop */
   const BellDropdown = () => (
     <>
-      <div className="fixed inset-0 z-10" onClick={() => setBellOpen(false)} />
-      <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl z-20 overflow-hidden">
+      <div className="fixed inset-0 z-[1100]" onClick={() => setBellOpen(false)} />
+      <div className="fixed top-20 right-4 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-xl z-[1200] overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
           <p className="text-sm font-semibold text-gray-700">
             Alerts {bellNotifications.length > 0 && `(${bellNotifications.length})`}
@@ -68,7 +69,7 @@ const Navbar = () => {
 
   return (
     <>
-    <nav className={navClassName}>
+    <nav className={`${navClassName} relative z-[800]`}>
       <div className="w-full px-4 sm:px-6">
         <div className="flex justify-between items-center h-20">
           {/* Left Side: Mobile menu button + Brand */}
@@ -189,7 +190,7 @@ const Navbar = () => {
                 className={`hidden md:flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${userMenuHoverClass}`}
               >
                 {user?.profile_image_url ? (
-                  <img src={user.profile_image_url} alt={`${user?.name || 'User'} avatar`} className="h-8 w-8 rounded-full object-cover ring-2 ring-[#dccca9]" />
+                  <img src={resolveImageUrl(user.profile_image_url)} alt={`${user?.name || 'User'} avatar`} className="h-8 w-8 rounded-full object-cover ring-2 ring-[#dccca9]" />
                 ) : (
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#181511] text-xs font-bold text-[#f8f4ec]">
                     {(user?.name || 'U').charAt(0).toUpperCase()}
@@ -210,7 +211,7 @@ const Navbar = () => {
                 className={`md:hidden flex items-center rounded-lg p-1 transition-colors ${userMenuHoverClass}`}
               >
                 {user?.profile_image_url ? (
-                  <img src={user.profile_image_url} alt={`${user?.name || 'User'} avatar`} className="h-8 w-8 rounded-full object-cover ring-2 ring-[#dccca9]" />
+                  <img src={resolveImageUrl(user.profile_image_url)} alt={`${user?.name || 'User'} avatar`} className="h-8 w-8 rounded-full object-cover ring-2 ring-[#dccca9]" />
                 ) : (
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#181511] text-xs font-bold text-[#f8f4ec]">
                     {(user?.name || 'U').charAt(0).toUpperCase()}
@@ -220,12 +221,12 @@ const Navbar = () => {
 
               {userMenuOpen && (
                 <>
-                  <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
-                  <div className="absolute right-0 top-full z-20 mt-2 w-60 overflow-hidden rounded-lg bg-white shadow-xl">
+                  <div className="fixed inset-0 z-[1100]" onClick={() => setUserMenuOpen(false)} />
+                  <div className="absolute right-0 top-full z-[1200] mt-2 w-60 overflow-hidden rounded-lg bg-white shadow-xl">
                     <div className="border-b border-gray-100 px-4 py-3">
                       <div className="flex items-center gap-3">
                         {user?.profile_image_url ? (
-                          <img src={user.profile_image_url} alt={`${user?.name || 'User'} avatar`} className="h-10 w-10 rounded-full object-cover" />
+                          <img src={resolveImageUrl(user.profile_image_url)} alt={`${user?.name || 'User'} avatar`} className="h-10 w-10 rounded-full object-cover" />
                         ) : (
                           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e9e0cf] text-sm font-bold text-[#181511]">
                             {(user?.name || 'U').charAt(0).toUpperCase()}
@@ -261,12 +262,12 @@ const Navbar = () => {
       <>
         {/* Backdrop */}
         <div
-          className="fixed inset-0 z-40 bg-black/25 backdrop-blur-sm"
+          className="fixed inset-0 z-[1100] bg-black/25 backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         />
 
         {/* Dropdown box */}
-        <div className="fixed top-[82px] left-4 z-50 w-72 rounded-2xl bg-[#f8f4ec] shadow-2xl border border-[#e9e0cf] overflow-hidden">
+        <div className="fixed top-[82px] left-4 z-[1200] w-72 rounded-2xl bg-[#f8f4ec] shadow-2xl border border-[#e9e0cf] overflow-hidden">
           <nav className="p-2 space-y-0.5">
             {[
               { to: '/dashboard', label: 'Dashboard', sub: 'Home overview' },

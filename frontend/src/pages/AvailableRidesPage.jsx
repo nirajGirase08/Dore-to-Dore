@@ -21,7 +21,7 @@ const STATUS_COLORS = {
 const STATUS_LABELS = {
   accepted:  'Accepted',
   en_route:  'On the way',
-  picked_up: 'Community member aboard',
+  picked_up: 'Rider aboard',
 };
 
 // Haversine distance in km
@@ -46,7 +46,12 @@ const AvailableRidesPage = () => {
   const [error, setError] = useState('');
   const [accepting, setAccepting] = useState(null);
   const [acceptError, setAcceptError] = useState('');
-  const [dismissed, setDismissed] = useState(() => new Set());
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      const saved = localStorage.getItem('dtd_dismissed_rides');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch { return new Set(); }
+  });
   const [volunteerPos, setVolunteerPos] = useState(null);
   const [showEmergencyRideModal, setShowEmergencyRideModal] = useState(false);
 
@@ -296,7 +301,11 @@ const AvailableRidesPage = () => {
                         {accepting === ride.ride_request_id ? '...' : 'Support This Ride'}
                       </button>
                       <button
-                        onClick={() => setDismissed((prev) => new Set([...prev, ride.ride_request_id]))}
+                        onClick={() => {
+                          const next = new Set([...dismissed, ride.ride_request_id]);
+                          setDismissed(next);
+                          try { localStorage.setItem('dtd_dismissed_rides', JSON.stringify([...next])); } catch {}
+                        }}
                         className="px-5 py-2 rounded-xl text-sm text-gray-500 border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors"
                       >
                         Sorry, not available

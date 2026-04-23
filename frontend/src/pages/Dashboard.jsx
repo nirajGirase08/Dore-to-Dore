@@ -153,9 +153,9 @@ const Dashboard = () => {
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-[#181511]">Nashville Crisis Map</h2>
+            <h2 className="text-2xl font-bold text-[#181511]">Emergency Map</h2>
             <p className="text-sm text-[#7c6248] mt-1">
-              Active road hazards · Updates every 30 seconds
+              Active road hazards
               {demoEnabled ? ` · Weather window ${demoRange.startDate} to ${demoRange.endDate}` : ''}
             </p>
           </div>

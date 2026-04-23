@@ -35,10 +35,12 @@ const makeMedicalIcon = (emoji, borderColor) =>
     popupAnchor: [0, -20],
   });
 
+const NGROK_HEADERS = { 'ngrok-skip-browser-warning': 'true' };
+
 const fetchMedicalFacilities = async (map) => {
   try {
     // Call our own backend proxy — avoids browser CORS issues with Overpass
-    const res  = await fetch('/api/medical-facilities');
+    const res  = await fetch('/api/medical-facilities', { headers: NGROK_HEADERS });
     if (!res.ok) throw new Error(`API ${res.status}`);
     const { data } = await res.json();
 
@@ -64,7 +66,7 @@ const fetchMedicalFacilities = async (map) => {
 
 const fetchShelters = async (map) => {
   try {
-    const res = await fetch('/api/shelters');
+    const res = await fetch('/api/shelters', { headers: NGROK_HEADERS });
     if (!res.ok) throw new Error(`API ${res.status}`);
     const { data } = await res.json();
     if (!data?.length) return;

@@ -161,6 +161,17 @@ const VolunteerPage = () => {
     setEditingOffer(offer);
   };
 
+  const handleDeleteOffer = async (offer) => {
+    if (!window.confirm('Delete this listing? This cannot be undone.')) return;
+    try {
+      await offersAPI.delete(offer.offer_id);
+      setMyOffers((prev) => prev.filter((o) => o.offer_id !== offer.offer_id));
+    } catch (err) {
+      console.error('Failed to delete offer:', err);
+      alert('Failed to delete. Please try again.');
+    }
+  };
+
   const handleViewOffer = (offer) => {
     navigate(`/offers/${offer.offer_id}`);
   };
@@ -448,7 +459,7 @@ const VolunteerPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredActiveOffers.map((offer) => (
                         <OfferCard key={offer.offer_id} offer={offer} showContact={false}
-                          onEdit={handleEditOffer} onFulfillItem={handleFulfillOfferItem} onView={handleViewOffer} />
+                          onEdit={handleEditOffer} onDelete={handleDeleteOffer} onFulfillItem={handleFulfillOfferItem} onView={handleViewOffer} />
                       ))}
                     </div>
                   </div>
@@ -462,7 +473,7 @@ const VolunteerPage = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredFulfilledOffers.map((offer) => (
-                        <OfferCard key={offer.offer_id} offer={offer} showContact={false} onView={handleViewOffer} />
+                        <OfferCard key={offer.offer_id} offer={offer} showContact={false} onDelete={handleDeleteOffer} onView={handleViewOffer} />
                       ))}
                     </div>
                   </div>
@@ -476,7 +487,7 @@ const VolunteerPage = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredOtherOffers.map((offer) => (
-                        <OfferCard key={offer.offer_id} offer={offer} showContact={false} onView={handleViewOffer} />
+                        <OfferCard key={offer.offer_id} offer={offer} showContact={false} onDelete={handleDeleteOffer} onView={handleViewOffer} />
                       ))}
                     </div>
                   </div>

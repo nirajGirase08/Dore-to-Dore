@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { updateBlockage } from '../../services/blockageService';
+import { resolveImageUrl } from '../../services/api';
 
 const SEVERITY_STYLES = {
   low: 'bg-green-100 text-green-800',
@@ -84,7 +85,7 @@ const BlockageCard = ({ blockage, onUpdate }) => {
         {/* Photo thumbnail */}
         {blockage.photo_url && (
           <img
-            src={blockage.photo_url}
+            src={resolveImageUrl(blockage.photo_url)}
             alt="Blockage photo"
             className="rounded-lg max-h-32 w-full object-cover border border-gray-200"
           />
@@ -191,9 +192,9 @@ const BlockageCard = ({ blockage, onUpdate }) => {
               {blockage.photo_url && (
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Photo</p>
-                  <a href={blockage.photo_url} target="_blank" rel="noopener noreferrer">
+                  <a href={resolveImageUrl(blockage.photo_url)} target="_blank" rel="noopener noreferrer">
                     <img
-                      src={blockage.photo_url}
+                      src={resolveImageUrl(blockage.photo_url)}
                       alt="Blockage photo"
                       className="rounded-xl w-full object-contain border border-gray-200 hover:opacity-90 transition-opacity"
                     />

@@ -66,17 +66,37 @@ const mapPlaceCategory = (tags = {}) => {
 
 export const getNearbyPlaces = async ({ lat, lng, radiusKm = 8 }) => {
   const radiusMeters = Math.round(radiusKm * 1000);
-  const response = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `data=${encodeURIComponent(buildOverpassQuery(lat, lng, radiusMeters))}`,
-  });
 
-  if (!response.ok) {
-    throw new Error(`Overpass request failed with status ${response.status}`);
+  const empty = { hospitals: [], pharmacies: [], supermarkets: [], hardware_stores: [], gas_stations: [] };
+
+  let response;
+  try {
+    response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'CrisisConnect/1.0',
+      },
+      body: `data=${encodeURIComponent(buildOverpassQuery(lat, lng, radiusMeters))}`,
+    });
+  } catch (err) {
+    console.error('Overpass fetch error (nearby places):', err.message);
+    return empty;
   }
 
-  const data = await response.json();
+  if (!response.ok) {
+    console.error(`Overpass nearby places returned ${response.status}`);
+    return empty;
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch (err) {
+    console.error('Overpass nearby places JSON parse error:', err.message);
+    return empty;
+  }
+
   const grouped = {
     hospitals: [],
     pharmacies: [],

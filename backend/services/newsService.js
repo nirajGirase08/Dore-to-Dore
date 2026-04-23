@@ -137,37 +137,39 @@ export const fetchLatestLocalNews = async ({
     };
   }
 
-  const datedQuery = buildNewsQuery({ locationHint, startDate, endDate, includeDateOperators: true });
-  let items = await fetchNewsByQuery(datedQuery);
-  let queryUsed = datedQuery;
+  // Historical mode — query news from the specified date range
+  if (startDate) {
+    const datedQuery = buildNewsQuery({ locationHint, startDate, endDate, includeDateOperators: true });
+    let items = await fetchNewsByQuery(datedQuery);
+    let queryUsed = datedQuery;
 
-  if (!items.length && startDate) {
-    const looserQuery = buildNewsQuery({
-      locationHint,
-      startDate,
-      endDate,
-      includeDateOperators: false,
-    });
-    items = await fetchNewsByQuery(looserQuery);
-    queryUsed = looserQuery;
+    if (!items.length) {
+      const looserQuery = buildNewsQuery({ locationHint, startDate, endDate, includeDateOperators: false });
+      items = await fetchNewsByQuery(looserQuery);
+      queryUsed = looserQuery;
+    }
+
+    if (!items.length) {
+      const fallbackQuery = buildNewsQuery({ locationHint, startDate: null, endDate: null });
+      items = await fetchNewsByQuery(fallbackQuery);
+      queryUsed = fallbackQuery;
+    }
+
+    return { query: queryUsed, items };
   }
 
-  if (!items.length && !startDate) {
-    const today = new Date().toISOString().slice(0, 10);
-    const recentStart = subtractDays(today, 2);
-    const recentQuery = `Nashville Tennessee weather OR road closures OR emergency after:${recentStart} before:${addOneDay(today)}`;
-    items = await fetchNewsByQuery(recentQuery);
-    queryUsed = recentQuery;
-  }
+  // Current mode — only pull recent news (last 3 days) to avoid surfacing old storm articles
+  const today = new Date().toISOString().slice(0, 10);
+  const recentStart = subtractDays(today, 3);
+  const currentQuery = `Nashville Tennessee current conditions OR weather OR road closures OR emergency after:${recentStart} before:${addOneDay(today)}`;
+  let items = await fetchNewsByQuery(currentQuery);
+  let queryUsed = currentQuery;
 
   if (!items.length) {
-    const fallbackQuery = buildNewsQuery({ locationHint, startDate: null, endDate: null });
+    const fallbackQuery = `Nashville Tennessee weather OR road closures OR emergency after:${recentStart}`;
     items = await fetchNewsByQuery(fallbackQuery);
     queryUsed = fallbackQuery;
   }
 
-  return {
-    query: queryUsed,
-    items,
-  };
+  return { query: queryUsed, items };
 };
