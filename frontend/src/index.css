@@ -87,3 +87,33 @@
     @apply bg-[linear-gradient(180deg,rgba(125,174,211,0.18),rgba(248,244,236,0.95))] border-[#a9c4db];
   }
 }
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Toast slide-in animation */
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-in {
+  animation: slide-in 0.2s ease-out forwards;
+}
+
+/* Custom scrollbar for Chrome/Safari */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f0ebe0;
+}
+::-webkit-scrollbar-thumb {
+  background: #c9baa3;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a1842f;
+}

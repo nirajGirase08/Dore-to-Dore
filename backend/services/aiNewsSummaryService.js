@@ -6,13 +6,15 @@ import { getWeatherSummary } from './weatherService.js';
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:3b';
 
-const buildSystemPrompt = () => `
-You summarize crisis-related local conditions for a mutual-aid dashboard.
+const buildSystemPrompt = (isHistorical = false) => `
+You summarize local conditions for a mutual-aid dashboard.
 Return valid JSON only. No markdown.
-Use the provided weather window, current reported blockages, and latest news headlines.
-Do not invent facts that are not in the inputs.
-If the weather summary is clear or non-severe, do not describe a storm, winter storm, warning, or expected impact unless that wording appears in the supplied headlines or weather risk tags.
-Do not infer a city-wide storm from a single blockage such as an ice blockage.
+Use only the provided weather window, blockages, and headlines — do not invent facts.
+${isHistorical
+  ? 'You are summarizing a HISTORICAL weather event. Reference the storm, weather event, or crisis conditions described in the provided context.'
+  : 'You are summarizing CURRENT conditions right now. Do NOT mention historical storms, past winter events, or any storm/winter storm language unless those exact words appear in the provided current headlines or current weather risk tags. If the current weather is clear or mild, describe it as such.'
+}
+Do not infer a city-wide storm from a single blockage.
 Keep the title grounded in the supplied context.
 JSON schema:
 {
@@ -167,12 +169,13 @@ export const buildNewsSummaryContext = async ({
 };
 
 export const generateNewsSummary = async (context) => {
+  const isHistorical = context.weather_window?.mode === 'historical_range';
   const response = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: OLLAMA_MODEL,
-      prompt: `${buildSystemPrompt()}\n\n${buildUserPrompt(context)}`,
+      prompt: `${buildSystemPrompt(isHistorical)}\n\n${buildUserPrompt(context)}`,
       stream: false,
       options: {
         temperature: 0.2,

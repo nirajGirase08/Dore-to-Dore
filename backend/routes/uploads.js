@@ -89,15 +89,14 @@ router.post('/profile-image', authenticate, async (req, res) => {
     });
 
     const relativePath = `/uploads/profiles/${fileName}`;
-    const profileImageUrl = buildPublicUrl(req, relativePath);
     const user = await User.findByPk(req.userId);
 
-    await user.update({ profile_image_url: profileImageUrl });
+    await user.update({ profile_image_url: relativePath });
 
     res.json({
       success: true,
       data: {
-        profile_image_url: profileImageUrl,
+        profile_image_url: buildPublicUrl(req, relativePath),
         user: user.toSafeObject(),
       },
       message: 'Profile image uploaded successfully.',
@@ -131,12 +130,11 @@ router.post('/offer-item-image', authenticate, async (req, res) => {
     });
 
     const relativePath = `/uploads/offers/${fileName}`;
-    const imageUrl = buildPublicUrl(req, relativePath);
 
     res.json({
       success: true,
       data: {
-        image_url: imageUrl,
+        image_url: relativePath,
       },
       message: 'Offer item image uploaded successfully.',
     });
@@ -166,9 +164,8 @@ router.post('/blockage-image', authenticate, async (req, res) => {
     });
 
     const relativePath = `/uploads/blockages/${fileName}`;
-    const imageUrl = buildPublicUrl(req, relativePath);
 
-    res.json({ success: true, data: { image_url: imageUrl } });
+    res.json({ success: true, data: { image_url: relativePath } });
   } catch (error) {
     console.error('Blockage image upload error:', error);
     res.status(500).json({ success: false, error: 'Failed to upload blockage image.' });

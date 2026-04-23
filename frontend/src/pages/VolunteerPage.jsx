@@ -65,7 +65,6 @@ const VolunteerPage = () => {
   const [editingOffer, setEditingOffer] = useState(null);
   const [pendingFulfillment, setPendingFulfillment] = useState(null);
   const [error, setError] = useState('');
-  const [unreadCount, setUnreadCount] = useState(0);
   const [globalSearch, setGlobalSearch] = useState('');
   const [radiusKm, setRadiusKm] = useState(RADIUS_OPTIONS[2].km); // default 5 miles
 
@@ -110,21 +109,11 @@ const VolunteerPage = () => {
     }
   };
 
-  // Fetch unread message count
-  const fetchUnreadCount = async () => {
-    try {
-      const response = await conversationsAPI.getUnreadCount();
-      setUnreadCount(response.data?.unread_count || 0);
-    } catch (err) {
-      console.error('Failed to fetch unread count:', err);
-    }
-  };
-
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       const offers = await fetchMyOffers();
-      await Promise.all([fetchAllRequests(offers), fetchUnreadCount()]);
+      await fetchAllRequests(offers);
       setLoading(false);
     };
     loadData();
@@ -134,7 +123,6 @@ const VolunteerPage = () => {
   useEffect(() => {
     const handleFocus = () => {
       fetchMyOffers();
-      fetchUnreadCount();
     };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
@@ -171,6 +159,17 @@ const VolunteerPage = () => {
 
   const handleEditOffer = (offer) => {
     setEditingOffer(offer);
+  };
+
+  const handleDeleteOffer = async (offer) => {
+    if (!window.confirm('Delete this listing? This cannot be undone.')) return;
+    try {
+      await offersAPI.delete(offer.offer_id);
+      setMyOffers((prev) => prev.filter((o) => o.offer_id !== offer.offer_id));
+    } catch (err) {
+      console.error('Failed to delete offer:', err);
+      alert('Failed to delete. Please try again.');
+    }
   };
 
   const handleViewOffer = (offer) => {
@@ -268,31 +267,11 @@ const VolunteerPage = () => {
     <div className="container-custom py-8">
       <div className="page-shell page-help-theme p-6 md:p-8">
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">I Can Help</h1>
-          <p className="text-gray-600">
-            Share your resources and help community members in need
-          </p>
-        </div>
-
-        {/* Messages Button with Badge */}
-        <button
-          onClick={() => navigate('/messages')}
-          className="relative flex items-center space-x-2 px-4 py-2 bg-[#181511] text-[#f8f4ec] rounded-lg hover:bg-[#2a261f] transition-colors shadow-md"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-          <span className="font-medium">Messages</span>
-          {unreadCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
-          )}
-        </button>
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">I Can Help</h1>
+        <p className="text-gray-600">
+          Share your resources and help community members in need
+        </p>
       </div>
 
       {error && (
@@ -480,7 +459,7 @@ const VolunteerPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredActiveOffers.map((offer) => (
                         <OfferCard key={offer.offer_id} offer={offer} showContact={false}
-                          onEdit={handleEditOffer} onFulfillItem={handleFulfillOfferItem} onView={handleViewOffer} />
+                          onEdit={handleEditOffer} onDelete={handleDeleteOffer} onFulfillItem={handleFulfillOfferItem} onView={handleViewOffer} />
                       ))}
                     </div>
                   </div>
@@ -494,7 +473,7 @@ const VolunteerPage = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredFulfilledOffers.map((offer) => (
-                        <OfferCard key={offer.offer_id} offer={offer} showContact={false} onView={handleViewOffer} />
+                        <OfferCard key={offer.offer_id} offer={offer} showContact={false} onDelete={handleDeleteOffer} onView={handleViewOffer} />
                       ))}
                     </div>
                   </div>
@@ -508,7 +487,7 @@ const VolunteerPage = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredOtherOffers.map((offer) => (
-                        <OfferCard key={offer.offer_id} offer={offer} showContact={false} onView={handleViewOffer} />
+                        <OfferCard key={offer.offer_id} offer={offer} showContact={false} onDelete={handleDeleteOffer} onView={handleViewOffer} />
                       ))}
                     </div>
                   </div>

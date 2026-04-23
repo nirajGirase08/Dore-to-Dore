@@ -21,7 +21,7 @@ const STATUS_COLORS = {
 const STATUS_LABELS = {
   accepted:  'Accepted',
   en_route:  'On the way',
-  picked_up: 'Community member aboard',
+  picked_up: 'Rider aboard',
 };
 
 // Haversine distance in km
@@ -45,6 +45,13 @@ const AvailableRidesPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [accepting, setAccepting] = useState(null);
+  const [acceptError, setAcceptError] = useState('');
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      const saved = localStorage.getItem('dtd_dismissed_rides');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch { return new Set(); }
+  });
   const [volunteerPos, setVolunteerPos] = useState(null);
   const [showEmergencyRideModal, setShowEmergencyRideModal] = useState(false);
 
@@ -76,17 +83,24 @@ const AvailableRidesPage = () => {
 
   useEffect(() => {
     fetchAll();
-    const interval = setInterval(fetchAll, 10000);
+    const interval = setInterval(fetchAll, 5000);
     return () => clearInterval(interval);
   }, [fetchAll]);
 
   const handleAccept = async (rideId) => {
     setAccepting(rideId);
+    setAcceptError('');
     try {
       await ridesAPI.accept(rideId);
       navigate(`/rides/${rideId}`);
     } catch (err) {
-      alert(err.message || 'Failed to accept support ride.');
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('no longer available') || msg.toLowerCase().includes('no longer')) {
+        // Ride was just taken by someone else — refresh list silently
+        await fetchAll();
+      } else {
+        setAcceptError(msg || 'Failed to accept support ride.');
+      }
       setAccepting(null);
     }
   };
@@ -102,21 +116,24 @@ const AvailableRidesPage = () => {
 
   return (
     <div className="container-custom py-8 max-w-4xl mx-auto">
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-1">Community Rides</h1>
-          <p className="text-gray-500 text-sm">See where people need transportation support and request a community support ride when needed</p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-start gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-3xl font-bold text-[#181511] mb-1">Community Rides</h1>
+          <p className="text-[#7c6248] text-sm">Transportation support coordination for the Vanderbilt community</p>
         </div>
         <button
           onClick={() => setShowEmergencyRideModal(true)}
-          className="flex-shrink-0 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-red-700"
+          className="sm:flex-shrink-0 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-red-700 w-full sm:w-auto"
         >
-          Request Dore Support Ride
+          Request a Support Ride
         </button>
       </div>
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">{error}</div>
+      )}
+      {acceptError && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">{acceptError}</div>
       )}
 
       {/* Rides I’m supporting */}
@@ -208,7 +225,7 @@ const AvailableRidesPage = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {available.map((ride) => {
+            {available.filter((r) => !dismissed.has(r.ride_request_id)).map((ride) => {
               const distKm = volunteerPos
                 ? haversineKm(volunteerPos.lat, volunteerPos.lng, parseFloat(ride.pickup_lat), parseFloat(ride.pickup_lng))
                 : null;
@@ -284,10 +301,14 @@ const AvailableRidesPage = () => {
                         {accepting === ride.ride_request_id ? '...' : 'Support This Ride'}
                       </button>
                       <button
-                        disabled
-                        className="px-5 py-2 rounded-xl text-sm text-gray-400 border border-gray-200 bg-gray-50 cursor-not-allowed"
+                        onClick={() => {
+                          const next = new Set([...dismissed, ride.ride_request_id]);
+                          setDismissed(next);
+                          try { localStorage.setItem('dtd_dismissed_rides', JSON.stringify([...next])); } catch {}
+                        }}
+                        className="px-5 py-2 rounded-xl text-sm text-gray-500 border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors"
                       >
-                        Sorry not available
+                        Sorry, not available
                       </button>
                     </div>
                   </div>

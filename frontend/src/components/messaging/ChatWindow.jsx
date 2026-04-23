@@ -192,8 +192,12 @@ const ChatWindow = ({ conversation, onBack, onMessageSent }) => {
         </div>
       )}
 
-      {/* Input */}
-      <form onSubmit={handleSendMessage} className="flex gap-2">
+      {/* Input — sticky bottom with safe-area inset for mobile Chrome */}
+      <form
+        onSubmit={handleSendMessage}
+        className="flex gap-2 flex-shrink-0"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
         <input
           type="text"
           value={newMessage}
@@ -205,15 +209,15 @@ const ChatWindow = ({ conversation, onBack, onMessageSent }) => {
         <button
           type="submit"
           disabled={sending || !newMessage.trim()}
-          className="btn-primary px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-primary px-4 md:px-6 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
         >
           {sending ? (
             <div className="flex items-center gap-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              <span>Sending...</span>
+              <span className="hidden sm:inline">Sending...</span>
             </div>
           ) : (
-            'Send'
+            <span>Send</span>
           )}
         </button>
       </form>

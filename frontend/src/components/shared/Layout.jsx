@@ -11,15 +11,15 @@ const Layout = ({ children }) => {
       <AlertBanner />
       <MessageBanner />
       <ToastNotification />
-      <main className="flex-1 bg-gray-50">
+      <main className="flex-1 bg-[#f8f4ec]">
         {children}
       </main>
-      <footer className="bg-gray-800 text-white py-6 text-center">
+      <footer className="bg-[#181511] text-[#f8f4ec] py-6 text-center">
         <div className="container-custom">
-          <p className="text-sm">
-            Dore-to-Dore &copy; 2024 | Vanderbilt Community Resource Matching Platform
+          <p className="text-sm opacity-75">
+            Dore-to-Dore &copy; 2025 | Vanderbilt Community Resource Matching Platform
           </p>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs opacity-40 mt-1">
             Built for crisis response and community support
           </p>
         </div>

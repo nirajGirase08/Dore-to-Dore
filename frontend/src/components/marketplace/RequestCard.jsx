@@ -13,7 +13,7 @@ const urgencyLabels = {
   critical: 'Critical',
 };
 
-const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfillItem, onView, matchScore, matchDistanceKm }) => {
+const RequestCard = ({ request, showContact = true, onContact, onEdit, onDelete, onFulfillItem, onView, matchScore, matchDistanceKm }) => {
   return (
     <div
       className={`card relative transition-shadow ${onView ? 'cursor-pointer hover:shadow-lg' : 'hover:shadow-lg'}`}
@@ -137,6 +137,17 @@ const RequestCard = ({ request, showContact = true, onContact, onEdit, onFulfill
                     className="px-3 py-2 bg-[#7c6248] text-white text-sm font-semibold rounded-lg hover:bg-[#654f39] transition-colors"
                   >
                     Edit
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onDelete(request);
+                    }}
+                    className="px-3 py-2 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    Delete
                   </button>
                 )}
               </>

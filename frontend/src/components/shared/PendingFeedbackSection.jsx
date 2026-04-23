@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { trustAPI } from '../../services/api';
+import { trustAPI, resolveImageUrl } from '../../services/api';
 
 const PendingFeedbackSection = ({ pendingFeedback = [], onFeedbackSubmitted }) => {
   const [notes, setNotes] = useState({});
@@ -45,7 +45,7 @@ const PendingFeedbackSection = ({ pendingFeedback = [], onFeedbackSubmitted }) =
             <div className="flex items-center gap-3">
               {entry.helper?.profile_image_url ? (
                 <img
-                  src={entry.helper.profile_image_url}
+                  src={resolveImageUrl(entry.helper.profile_image_url)}
                   alt={`${entry.helper?.name || 'Helper'} profile`}
                   className="h-12 w-12 rounded-full object-cover"
                 />

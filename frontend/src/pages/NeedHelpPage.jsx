@@ -65,7 +65,6 @@ const NeedHelpPage = () => {
   const [editingRequest, setEditingRequest] = useState(null);
   const [pendingFulfillment, setPendingFulfillment] = useState(null);
   const [error, setError] = useState('');
-  const [unreadCount, setUnreadCount] = useState(0);
   const [globalSearch, setGlobalSearch] = useState('');
   const [radiusKm, setRadiusKm] = useState(RADIUS_OPTIONS[2].km); // default 5 miles
 
@@ -110,21 +109,11 @@ const NeedHelpPage = () => {
     }
   };
 
-  // Fetch unread message count
-  const fetchUnreadCount = async () => {
-    try {
-      const response = await conversationsAPI.getUnreadCount();
-      setUnreadCount(response.data?.unread_count || 0);
-    } catch (err) {
-      console.error('Failed to fetch unread count:', err);
-    }
-  };
-
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       const requests = await fetchMyRequests();
-      await Promise.all([fetchAllOffers(requests), fetchUnreadCount()]);
+      await fetchAllOffers(requests);
       setLoading(false);
     };
     loadData();
@@ -134,7 +123,6 @@ const NeedHelpPage = () => {
   useEffect(() => {
     const handleFocus = () => {
       fetchMyRequests();
-      fetchUnreadCount();
     };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
@@ -168,6 +156,17 @@ const NeedHelpPage = () => {
 
   const handleEditRequest = (request) => {
     setEditingRequest(request);
+  };
+
+  const handleDeleteRequest = async (request) => {
+    if (!window.confirm('Delete this request? This cannot be undone.')) return;
+    try {
+      await requestsAPI.delete(request.request_id);
+      setMyRequests((prev) => prev.filter((r) => r.request_id !== request.request_id));
+    } catch (err) {
+      console.error('Failed to delete request:', err);
+      alert('Failed to delete. Please try again.');
+    }
   };
 
   const handleViewRequest = (request) => {
@@ -265,31 +264,11 @@ const NeedHelpPage = () => {
     <div className="container-custom py-8">
       <div className="page-shell page-need-theme p-6 md:p-8">
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">I Need Help</h1>
-          <p className="text-gray-600">
-            Connect with volunteers who can provide the support you need
-          </p>
-        </div>
-
-        {/* Messages Button with Badge */}
-        <button
-          onClick={() => navigate('/messages')}
-          className="relative flex items-center space-x-2 px-4 py-2 bg-[#181511] text-[#f8f4ec] rounded-lg hover:bg-[#2a261f] transition-colors shadow-md"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-          <span className="font-medium">Messages</span>
-          {unreadCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </span>
-          )}
-        </button>
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">I Need Help</h1>
+        <p className="text-gray-600">
+          Connect with volunteers who can provide the support you need
+        </p>
       </div>
 
       {error && (
@@ -477,7 +456,7 @@ const NeedHelpPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredActiveRequests.map((request) => (
                         <RequestCard key={request.request_id} request={request} showContact={false}
-                          onEdit={handleEditRequest} onFulfillItem={handleFulfillRequestItem} onView={handleViewRequest} />
+                          onEdit={handleEditRequest} onDelete={handleDeleteRequest} onFulfillItem={handleFulfillRequestItem} onView={handleViewRequest} />
                       ))}
                     </div>
                   </div>
@@ -491,7 +470,7 @@ const NeedHelpPage = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredFulfilledRequests.map((request) => (
-                        <RequestCard key={request.request_id} request={request} showContact={false} onView={handleViewRequest} />
+                        <RequestCard key={request.request_id} request={request} showContact={false} onDelete={handleDeleteRequest} onView={handleViewRequest} />
                       ))}
                     </div>
                   </div>
@@ -505,7 +484,7 @@ const NeedHelpPage = () => {
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {filteredOtherRequests.map((request) => (
-                        <RequestCard key={request.request_id} request={request} showContact={false} onView={handleViewRequest} />
+                        <RequestCard key={request.request_id} request={request} showContact={false} onDelete={handleDeleteRequest} onView={handleViewRequest} />
                       ))}
                     </div>
                   </div>

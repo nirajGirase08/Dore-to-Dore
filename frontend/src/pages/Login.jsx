@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import vandyLogo from '../../../images/vandy_logo.png';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -45,26 +46,34 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 to-primary-700 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-xl p-8">
-          {/* Logo/Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Dore-to-Dore</h1>
-            <p className="text-gray-600">Vanderbilt Community Resource Matching</p>
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#f8f4ec] px-4 py-12">
+      {/* Background accent */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-[#b49248]/10" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-[#b49248]/8" />
+      </div>
 
-          {/* Error message */}
+      <div className="relative w-full max-w-md">
+        {/* Brand header */}
+        <div className="text-center mb-8">
+          <img src={vandyLogo} alt="Vanderbilt" className="h-10 w-auto mx-auto mb-4 object-contain" />
+          <h1 className="text-4xl font-bold text-[#181511] mb-1">Dore-to-Dore</h1>
+          <p className="text-[#7c6248] text-sm">Vanderbilt Community Resource Matching</p>
+        </div>
+
+        {/* Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-[#e7dccb] p-8">
+          <h2 className="text-xl font-semibold text-[#181511] mb-6">Sign in to your account</h2>
+
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <div className="mb-5 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
               {error}
             </div>
           )}
 
-          {/* Login form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-[#181511] mb-1.5">
                 Email Address
               </label>
               <input
@@ -80,7 +89,7 @@ const Login = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-[#181511] mb-1.5">
                 Password
               </label>
               <input
@@ -98,27 +107,20 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full"
+              className="btn-primary w-full mt-2"
             >
-              {loading ? 'Logging in...' : 'Log In'}
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
-          {/* Register link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+          <div className="mt-6 pt-5 border-t border-[#e7dccb] text-center">
+            <p className="text-sm text-[#7c6248]">
               Don't have an account?{' '}
-              <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">
-                Register here
+              <Link to="/register" className="text-[#a1842f] hover:text-[#6c5b20] font-semibold">
+                Create one here
               </Link>
             </p>
           </div>
-        </div>
-
-        {/* Info box */}
-        <div className="mt-6 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 text-white text-sm">
-          <p className="font-medium mb-2">For Demo/Testing:</p>
-          <p>You can register a new account or use test credentials if available.</p>
         </div>
       </div>
     </div>

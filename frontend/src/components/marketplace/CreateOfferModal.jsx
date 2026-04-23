@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { offersAPI, uploadsAPI } from '../../services/api';
+import { offersAPI, uploadsAPI, resolveImageUrl } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { RESOURCE_TYPES, TARGET_GENDER_OPTIONS } from '../../constants/marketplace';
 import AddressAutocomplete from '../shared/AddressAutocomplete';
@@ -336,7 +336,7 @@ const CreateOfferModal = ({ isOpen, onClose, onSuccess, initialData = null, mode
                     />
                     {item.imagePreviewUrl && (
                       <img
-                        src={item.imagePreviewUrl}
+                        src={resolveImageUrl(item.imagePreviewUrl)}
                         alt={`${item.resource_type} preview`}
                         className="h-16 w-16 rounded-lg object-cover"
                       />

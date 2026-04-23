@@ -18,10 +18,12 @@ const PORT = process.env.PORT || 5001;
 // MIDDLEWARE
 // ============================================
 
-// CORS Configuration
+// CORS Configuration — reflect any origin so ngrok / local / phone all work
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => callback(null, true),
   credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 }));
 
 // Body parsing middleware
@@ -100,6 +102,9 @@ app.use('/api/notifications', notificationRoutes);
 // [DEV2] Medical facilities proxy (Overpass API — avoids browser CORS)
 import medicalFacilitiesRoutes from './routes/medicalFacilities.js';
 app.use('/api/medical-facilities', medicalFacilitiesRoutes);
+
+import shelterRoutes from './routes/shelters.js';
+app.use('/api/shelters', shelterRoutes);
 
 import ridesRoutes from './routes/rides.js';
 app.use('/api/rides', ridesRoutes);

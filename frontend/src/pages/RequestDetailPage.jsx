@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { conversationsAPI, requestsAPI, trustAPI } from '../services/api';
+import { conversationsAPI, requestsAPI, trustAPI, resolveImageUrl } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import TrustSummary from '../components/shared/TrustSummary';
 
@@ -121,7 +121,7 @@ const RequestDetailPage = () => {
           <div className="flex items-center gap-4">
             {request.user?.profile_image_url ? (
               <img
-                src={request.user.profile_image_url}
+                src={resolveImageUrl(request.user.profile_image_url)}
                 alt={`${request.user?.name || 'Requester'} profile`}
                 className="h-16 w-16 rounded-full object-cover"
               />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { conversationsAPI, offersAPI, trustAPI } from '../services/api';
+import { conversationsAPI, offersAPI, trustAPI, resolveImageUrl } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import TrustSummary from '../components/shared/TrustSummary';
 
@@ -102,7 +102,7 @@ const OfferDetailPage = () => {
                   <div className="flex flex-col gap-4 md:flex-row">
                     {item.image_url ? (
                       <img
-                        src={item.image_url}
+                        src={resolveImageUrl(item.image_url)}
                         alt={item.resource_type}
                         className="h-40 w-full rounded-xl object-cover md:w-52"
                       />
@@ -132,7 +132,7 @@ const OfferDetailPage = () => {
           <div className="flex items-center gap-4">
             {offer.user?.profile_image_url ? (
               <img
-                src={offer.user.profile_image_url}
+                src={resolveImageUrl(offer.user.profile_image_url)}
                 alt={`${offer.user?.name || 'Helper'} profile`}
                 className="h-16 w-16 rounded-full object-cover"
               />

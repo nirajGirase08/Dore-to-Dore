@@ -1,5 +1,6 @@
+import { resolveImageUrl } from '../../services/api';
 import React from 'react';
-const OfferCard = ({ offer, showContact = true, onContact, onEdit, onFulfillItem, onView, matchScore, matchDistanceKm }) => {
+const OfferCard = ({ offer, showContact = true, onContact, onEdit, onDelete, onFulfillItem, onView, matchScore, matchDistanceKm }) => {
   return (
     <div
       className={`card relative transition-shadow ${onView ? 'cursor-pointer hover:shadow-lg' : 'hover:shadow-lg'}`}
@@ -58,7 +59,7 @@ const OfferCard = ({ offer, showContact = true, onContact, onEdit, onFulfillItem
                 <div className="flex items-start gap-3">
                   {item.image_url ? (
                     <img
-                      src={item.image_url}
+                      src={resolveImageUrl(item.image_url)}
                       alt={item.resource_type}
                       className="h-12 w-12 rounded-lg object-cover"
                     />
@@ -136,6 +137,17 @@ const OfferCard = ({ offer, showContact = true, onContact, onEdit, onFulfillItem
                     className="px-3 py-2 bg-[#7c6248] text-white text-sm font-semibold rounded-lg hover:bg-[#654f39] transition-colors"
                   >
                     Edit
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onDelete(offer);
+                    }}
+                    className="px-3 py-2 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    Delete
                   </button>
                 )}
               </>

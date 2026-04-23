@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { authAPI, trustAPI, uploadsAPI } from '../services/api';
+import { authAPI, trustAPI, uploadsAPI, resolveImageUrl } from '../services/api';
 import PendingFeedbackSection from '../components/shared/PendingFeedbackSection';
 import TrustSummary from '../components/shared/TrustSummary';
 
@@ -206,7 +206,7 @@ const ProfilePage = () => {
             <div className="flex items-center gap-4">
               {imagePreviewUrl ? (
                 <img
-                  src={imagePreviewUrl}
+                  src={resolveImageUrl(imagePreviewUrl)}
                   alt={`${user?.name || 'User'} profile`}
                   className="h-20 w-20 rounded-full object-cover ring-4 ring-white"
                 />

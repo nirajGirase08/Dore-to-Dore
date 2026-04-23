@@ -5,9 +5,14 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    allowedHosts: ['reflector-quack-oblong.ngrok-free.dev'],
+    host: true,
+    allowedHosts: true,
     proxy: {
       '/api': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+      },
+      '/uploads': {
         target: 'http://localhost:5001',
         changeOrigin: true,
       },
